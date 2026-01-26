@@ -24,13 +24,20 @@ export async function apiFetch(path, { method = "GET", body, token } = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(buildUrl(path), {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let response;
+  let payload;
+  try {
+    response = await fetch(buildUrl(path), {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
 
-  const payload = await parseResponse(response);
+    payload = await parseResponse(response);
+  } catch (error) {
+    console.error("API network error:", error);
+    throw new Error("Sunucuya ulaşılamıyor. Lütfen bağlantınızı kontrol edin.");
+  }
 
   if (!response.ok) {
     const errorMessage =

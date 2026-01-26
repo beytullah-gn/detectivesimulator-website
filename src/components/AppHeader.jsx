@@ -4,16 +4,17 @@ export default function AppHeader({
   onLogin,
   onRegister,
   onLogout,
+  onHome,
 }) {
   return (
     <header className="app-header">
-      <div className="brand">
+      <button type="button" className="brand" onClick={onHome}>
         <span className="brand-mark">DS</span>
         <div>
-          <h1>Detective Simulator</h1>
+          <h1>Detective simulator</h1>
           <p>Directus tabanlı interaktif soruşturma deneyimi</p>
         </div>
-      </div>
+      </button>
       <div className="header-actions">
         {isLoggedIn ? (
           <>

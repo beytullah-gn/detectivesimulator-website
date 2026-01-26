@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import AppHeader from "./components/AppHeader";
 import AlertMessage from "./components/AlertMessage";
@@ -24,6 +24,8 @@ import {
   startSession,
   submitFinalAnswer,
   useHint,
+  fetchMySessions,
+  fetchSessionDetail,
 } from "./services/gameService";
 
 const VIEW = {
@@ -32,6 +34,8 @@ const VIEW = {
   REGISTER: "register",
   SCENARIOS: "scenarios",
 };
+
+const SESSION_STORAGE_KEY = "detective_simulator_session";
 
 function App() {
   const [token, setToken] = useState(() => getStoredToken());
@@ -54,6 +58,8 @@ function App() {
     explanation: "",
   });
   const [finalResult, setFinalResult] = useState(null);
+  const [sessionHistory, setSessionHistory] = useState([]);
+  const hasRestoredSession = useRef(false);
 
   const isLoggedIn = Boolean(token);
   const isSessionActive = Boolean(session?.sessionId);
@@ -72,8 +78,72 @@ function App() {
   }, [token]);
 
   useEffect(() => {
+    if (!token || hasRestoredSession.current) return;
+    try {
+      const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!raw) {
+        hasRestoredSession.current = true;
+        return;
+      }
+      const saved = JSON.parse(raw);
+      const savedStatus = saved?.session?.status;
+      if (saved?.session?.sessionId && savedStatus !== "completed") {
+        setSession(saved.session || null);
+        setSelectedScenario(saved.selectedScenario || null);
+        setScenarioMedia(saved.scenarioMedia || []);
+        setCharacters(saved.characters || []);
+        setRelationsByCharacter(saved.relationsByCharacter || {});
+        setActiveCharacterId(saved.activeCharacterId || "");
+        setConversations(saved.conversations || {});
+        setHints(saved.hints || []);
+        setFinalAnswer(saved.finalAnswer || { selected: [], explanation: "" });
+        setFinalResult(saved.finalResult || null);
+        setView(VIEW.SCENARIOS);
+      }
+      hasRestoredSession.current = true;
+    } catch (error) {
+      console.error("Session restore error:", error);
+      hasRestoredSession.current = true;
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (!token || !session?.sessionId) return;
+    const payload = {
+      session,
+      selectedScenario,
+      scenarioMedia,
+      characters,
+      relationsByCharacter,
+      activeCharacterId,
+      conversations,
+      hints,
+      finalAnswer,
+      finalResult,
+    };
+    try {
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
+    } catch (error) {
+      console.error("Session save error:", error);
+    }
+  }, [
+    token,
+    session,
+    selectedScenario,
+    scenarioMedia,
+    characters,
+    relationsByCharacter,
+    activeCharacterId,
+    conversations,
+    hints,
+    finalAnswer,
+    finalResult,
+  ]);
+
+  useEffect(() => {
     if (isLoggedIn) {
       handleLoadScenarios().catch(() => undefined);
+      handleLoadSessionHistory().catch(() => undefined);
     }
   }, [isLoggedIn]);
 
@@ -98,6 +168,11 @@ function App() {
     resetSessionState();
     setSelectedScenario(null);
     setView(VIEW.LANDING);
+    try {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (error) {
+      console.error("Session clear error:", error);
+    }
   }
 
   async function handleFetchUser() {
@@ -121,6 +196,16 @@ function App() {
       setErrorMessage(error.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleLoadSessionHistory() {
+    try {
+      const data = await fetchMySessions(token);
+      const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
+      setSessionHistory(sessions);
+    } catch (error) {
+      console.error("Session history error:", error);
     }
   }
 
@@ -222,6 +307,7 @@ function App() {
       const data = await startSession(selectedScenario.id, token);
       setSession(data);
       setFinalResult(null);
+      await handleLoadSessionHistory();
     } catch (error) {
       console.error("Session start error:", error);
       setErrorMessage(error.message);
@@ -230,30 +316,47 @@ function App() {
     }
   }
 
-  async function handleAskQuestion(event) {
+  async function handleAskQuestion(event, overrideCharacterId) {
     event.preventDefault();
-    if (!question.trim() || !activeCharacterId || !session?.sessionId) return;
+    const trimmedQuestion = question.trim();
+    const targetCharacterId = overrideCharacterId || activeCharacterId;
+
+    if (!trimmedQuestion) {
+      setErrorMessage("Lütfen bir soru yazın.");
+      return;
+    }
+
+    if (!targetCharacterId) {
+      setErrorMessage("Lütfen bir şüpheli seçin.");
+      return;
+    }
+
+    if (!session?.sessionId) {
+      setErrorMessage("Oturum bulunamadı. Önce soruşturmayı başlatın.");
+      return;
+    }
+
     if (isSessionCompleted) return;
 
     setLoading(true);
     setErrorMessage("");
 
-    const userQuestion = question.trim();
+    const userQuestion = trimmedQuestion;
     setQuestion("");
 
     try {
       const data = await interrogate({
         sessionId: session.sessionId,
-        characterId: activeCharacterId,
+        characterId: targetCharacterId,
         question: userQuestion,
         token,
       });
 
       setConversations((prev) => {
-        const current = prev[activeCharacterId] || [];
+        const current = prev[targetCharacterId] || [];
         return {
           ...prev,
-          [activeCharacterId]: [
+          [targetCharacterId]: [
             ...current,
             { role: "user", content: userQuestion },
             { role: "assistant", content: data?.answer || "" },
@@ -308,8 +411,61 @@ function App() {
         token,
       });
       setFinalResult(data);
+      setSession((prev) => (prev ? { ...prev, status: "completed" } : prev));
+      await handleLoadSessionHistory();
     } catch (error) {
       console.error("Final answer error:", error);
+      setErrorMessage(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleGoHome() {
+    handleResetFlow();
+    setView(VIEW.SCENARIOS);
+  }
+
+  async function handleResumeSession(sessionId) {
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      const data = await fetchSessionDetail(sessionId, token);
+      const scenario = data?.scenario;
+      const sessionData = data?.session;
+      const logs = Array.isArray(data?.logs) ? data.logs : [];
+      const hintsData = Array.isArray(data?.hints) ? data.hints : [];
+      const result = data?.result || null;
+
+      if (!scenario || !sessionData?.sessionId) {
+        throw new Error("Oturum bilgisi alınamadı.");
+      }
+
+      setSelectedScenario(scenario);
+      setSession(sessionData);
+      setHints(hintsData);
+      setFinalResult(result);
+
+      const conversationMap = logs.reduce((acc, log) => {
+        const characterId = log?.character?.id;
+        if (!characterId) return acc;
+        if (!acc[characterId]) acc[characterId] = [];
+        if (log?.question) {
+          acc[characterId].push({ role: "user", content: log.question });
+        }
+        if (log?.answer) {
+          acc[characterId].push({ role: "assistant", content: log.answer });
+        }
+        return acc;
+      }, {});
+
+      setConversations(conversationMap);
+
+      await handleLoadScenarioData(scenario.id);
+
+      setView(VIEW.SCENARIOS);
+    } catch (error) {
+      console.error("Session resume error:", error);
       setErrorMessage(error.message);
     } finally {
       setLoading(false);
@@ -332,6 +488,11 @@ function App() {
     setCharacters([]);
     setScenarioMedia([]);
     setActiveCharacterId("");
+    try {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (error) {
+      console.error("Session clear error:", error);
+    }
   }
 
   return (
@@ -342,6 +503,7 @@ function App() {
         onLogin={() => setView(VIEW.LOGIN)}
         onRegister={() => setView(VIEW.REGISTER)}
         onLogout={handleLogout}
+        onHome={handleGoHome}
       />
 
       <main className="app-main">
@@ -386,6 +548,8 @@ function App() {
             relationsByCharacter={relationsByCharacter}
             onScenarioSelect={handleScenarioSelect}
             onRefreshScenarios={handleLoadScenarios}
+            sessionHistory={sessionHistory}
+            onResumeSession={handleResumeSession}
             onStartSession={handleStartSession}
             sessionActive={isSessionActive}
             onSelectCharacter={setActiveCharacterId}

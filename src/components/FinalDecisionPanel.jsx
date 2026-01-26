@@ -45,6 +45,14 @@ export default function FinalDecisionPanel({
   return (
     <section className="panel-section final-panel">
       <h3>Final Karar</h3>
+      <div className="final-criteria">
+        <p className="final-helper">Değerlendirme kriterleri:</p>
+        <ul>
+          <li>Seçtiğin şüpheliler senaryoyla tutarlı olmalı.</li>
+          <li>Gerekçende motivasyon ve kanıt bağlantısı net olmalı.</li>
+          <li>Varsa alibi çelişkilerini açıklamalısın.</li>
+        </ul>
+      </div>
       <form onSubmit={onSubmit} className="form">
         <div className="checkbox-grid">
           {characters.map((character) => (
@@ -68,6 +76,7 @@ export default function FinalDecisionPanel({
             placeholder="Kanıtları ve motivasyonu açıklayın..."
             disabled={disabled}
           />
+          <span className="char-count">{explanation.length}/2000</span>
         </label>
         <button type="submit" disabled={loading || disabled}>
           {loading ? "Değerlendiriliyor..." : "Kararı Gönder"}

@@ -1,7 +1,31 @@
+import { useEffect, useState } from "react";
 import { buildUrl } from "../services/apiClient";
 import { formatCharacterName, getInitials } from "../utils/formatters";
 
 export default function CharacterDetailCard({ character, relations = [] }) {
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (!character?.id) return;
+    try {
+      const stored = localStorage.getItem(`ds_notes_${character.id}`);
+      setNotes(stored || "");
+    } catch (error) {
+      console.error("Notes load error:", error);
+    }
+  }, [character?.id]);
+
+  const handleNotesChange = (event) => {
+    const value = event.target.value;
+    setNotes(value);
+    if (!character?.id) return;
+    try {
+      localStorage.setItem(`ds_notes_${character.id}`, value);
+    } catch (error) {
+      console.error("Notes save error:", error);
+    }
+  };
+
   return (
     <div className="character-detail-card">
       <div className="character-detail-header">
@@ -83,6 +107,17 @@ export default function CharacterDetailCard({ character, relations = [] }) {
           </div>
         </div>
       )}
+
+      <div className="character-detail-section">
+        <h4>📝 Notlarım</h4>
+        <textarea
+          className="character-notes"
+          rows={4}
+          placeholder="Bu şüpheliyle ilgili notlarını yaz..."
+          value={notes}
+          onChange={handleNotesChange}
+        />
+      </div>
     </div>
   );
 }

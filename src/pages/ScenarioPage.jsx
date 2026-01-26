@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ScenarioList from "../components/ScenarioList";
 import ScenarioMediaList from "../components/ScenarioMediaList";
 import HintsPanel from "../components/HintsPanel";
@@ -17,6 +17,8 @@ export default function ScenarioPage({
   relationsByCharacter,
   onScenarioSelect,
   onRefreshScenarios,
+  sessionHistory,
+  onResumeSession,
   onStartSession,
   sessionActive,
   onSelectCharacter,
@@ -39,6 +41,15 @@ export default function ScenarioPage({
   const [interrogationModalOpen, setInterrogationModalOpen] = useState(false);
   const [selectedCharacterForModal, setSelectedCharacterForModal] = useState(null);
   const [activeTab, setActiveTab] = useState("documents");
+  const [expandedCharacterId, setExpandedCharacterId] = useState(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  const activeSessions = (sessionHistory || []).filter(
+    (item) => item?.status === "continues"
+  );
+  const completedSessions = (sessionHistory || []).filter(
+    (item) => item?.status === "completed"
+  );
 
   const tabs = [
     { id: "documents", label: "Belgeler", icon: "📄" },
@@ -84,11 +95,24 @@ export default function ScenarioPage({
     setActiveTab("documents");
   };
 
+  useEffect(() => {
+    if (!selectedScenario) return;
+    if (finalResult) {
+      setCurrentStage(4);
+      return;
+    }
+    if (sessionActive) {
+      setCurrentStage((prev) => (prev < 3 ? 3 : prev));
+      return;
+    }
+    setCurrentStage((prev) => (prev === 1 ? 2 : prev));
+  }, [selectedScenario, sessionActive, finalResult]);
+
   return (
     <>
       {/* Show scenario list only when no scenario is selected */}
       {!selectedScenario ? (
-        <section style={{ maxWidth: "800px", margin: "0 auto" }}>
+        <section style={{ maxWidth: "900px", margin: "0 auto", display: "grid", gap: "1.5rem" }}>
           <ScenarioList
             scenarios={scenarios}
             selectedScenarioId={selectedScenario?.id}
@@ -96,6 +120,67 @@ export default function ScenarioPage({
             onRefresh={onRefreshScenarios}
             loading={loading}
           />
+          <div className="panel how-to-panel">
+            <h2>Nasıl Oynanır?</h2>
+            <ol className="how-to-steps">
+              <li>Bir senaryo seç ve “Soruşturmayı Başlat” butonuna bas.</li>
+              <li>Belgeleri incele, şüphelileri gözden geçir.</li>
+              <li>Şüphelilere sorular sorarak ipuçlarını topla.</li>
+              <li>İpuçlarını kullan, notlarını değerlendir.</li>
+              <li>Finalde suçluyu seç ve gerekçeni yaz.</li>
+            </ol>
+            <p className="how-to-note">İpucu kullanımı sınırlı olabilir; dikkatli harca.</p>
+          </div>
+          {(activeSessions.length > 0 || completedSessions.length > 0) && (
+            <div className="panel session-list-panel">
+              <div className="session-panel-header">
+                <h2>Eski Oturumlar</h2>
+                <button type="button" className="ghost" onClick={() => setIsHistoryOpen((prev) => !prev)}>
+                  {isHistoryOpen ? "Gizle" : "Göster"}
+                </button>
+              </div>
+              {isHistoryOpen && (
+                <>
+                  {activeSessions.length > 0 && (
+                    <div className="session-group">
+                      <h3>Devam Edenler</h3>
+                      <ul className="session-list">
+                        {activeSessions.map((item) => (
+                          <li key={item.id} className="session-item">
+                            <div>
+                              <strong>{item?.scenario?.title || "Senaryo"}</strong>
+                              <p>{item?.scenario?.description || "Açıklama yok"}</p>
+                            </div>
+                            <button type="button" onClick={() => onResumeSession?.(item.id)}>
+                              Devam Et
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {completedSessions.length > 0 && (
+                    <div className="session-group">
+                      <h3>Tamamlananlar</h3>
+                      <ul className="session-list">
+                        {completedSessions.map((item) => (
+                          <li key={item.id} className="session-item">
+                            <div>
+                              <strong>{item?.scenario?.title || "Senaryo"}</strong>
+                              <p>{item?.scenario?.description || "Açıklama yok"}</p>
+                            </div>
+                            <button type="button" className="ghost" onClick={() => onResumeSession?.(item.id)}>
+                              Sonucu Gör
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
         </section>
       ) : (
         <section className="panel scenario-detail" style={{ maxWidth: "1400px", margin: "0 auto" }}>
@@ -134,13 +219,37 @@ export default function ScenarioPage({
                 {activeTab === "suspects" && (
                   <div className="panel-section">
                     <h3>Şüpheliler ({characters.length})</h3>
-                    <div style={{ display: "grid", gap: "1.5rem" }}>
+                    <div style={{ display: "grid", gap: "1rem" }}>
                       {characters.map((character) => (
-                        <CharacterDetailCard
-                          key={character.id}
-                          character={character}
-                          relations={relationsByCharacter?.[character.id] || []}
-                        />
+                        <div key={character.id} className="character-expandable">
+                          <div
+                            className="character-summary-card"
+                            onClick={() =>
+                              setExpandedCharacterId(
+                                expandedCharacterId === character.id ? null : character.id
+                              )
+                            }
+                          >
+                            <div className="avatar">
+                              {getInitials(character)}
+                            </div>
+                            <div className="character-summary-info">
+                              <h4>{formatCharacterName(character)}</h4>
+                              <p>{character.personality || "Şüpheli"}</p>
+                            </div>
+                            <div className="expand-icon">
+                              {expandedCharacterId === character.id ? "▼" : "▶"}
+                            </div>
+                          </div>
+                          {expandedCharacterId === character.id && (
+                            <div className="character-detail-expanded">
+                              <CharacterDetailCard
+                                character={character}
+                                relations={relationsByCharacter?.[character.id] || []}
+                              />
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -165,13 +274,37 @@ export default function ScenarioPage({
                 {activeTab === "suspects" && (
                   <div className="panel-section">
                     <h3>Şüpheliler ({characters.length})</h3>
-                    <div style={{ display: "grid", gap: "1.5rem" }}>
+                    <div style={{ display: "grid", gap: "1rem" }}>
                       {characters.map((character) => (
-                        <CharacterDetailCard
-                          key={character.id}
-                          character={character}
-                          relations={relationsByCharacter?.[character.id] || []}
-                        />
+                        <div key={character.id} className="character-expandable">
+                          <div
+                            className="character-summary-card"
+                            onClick={() =>
+                              setExpandedCharacterId(
+                                expandedCharacterId === character.id ? null : character.id
+                              )
+                            }
+                          >
+                            <div className="avatar">
+                              {getInitials(character)}
+                            </div>
+                            <div className="character-summary-info">
+                              <h4>{formatCharacterName(character)}</h4>
+                              <p>{character.personality || "Şüpheli"}</p>
+                            </div>
+                            <div className="expand-icon">
+                              {expandedCharacterId === character.id ? "▼" : "▶"}
+                            </div>
+                          </div>
+                          {expandedCharacterId === character.id && (
+                            <div className="character-detail-expanded">
+                              <CharacterDetailCard
+                                character={character}
+                                relations={relationsByCharacter?.[character.id] || []}
+                              />
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>

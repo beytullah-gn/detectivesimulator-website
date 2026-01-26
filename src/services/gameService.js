@@ -24,6 +24,14 @@ export async function useHint(sessionId, token) {
   });
 }
 
+export async function fetchMySessions(token) {
+  return apiFetch("/game/session/list", { token });
+}
+
+export async function fetchSessionDetail(sessionId, token) {
+  return apiFetch(`/game/session/detail/${sessionId}`, { token });
+}
+
 export async function submitFinalAnswer({
   sessionId,
   selectedGuiltyPlayers,
