@@ -11,6 +11,23 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
+!.env.sample
+
+## Database dumps / local DB
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+
+## Sensitive files
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
 
 # Editor directories and files
 .vscode/*

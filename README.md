@@ -1,16 +1,87 @@
-# React + Vite
+# Detective Simulator - Website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Detective Simulator oyununun React tabanli frontend uygulamasi.
 
-Currently, two official plugins are available:
+Bu uygulama:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Senaryo listesi ve detay ekranlarini gosterir
+- Oyuncu sorgulama ve ipucu akisini yonetir
+- Directus backend API ile iletisim kurar
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19
+- Vite 7
+- ESLint 9
 
-## Expanding the ESLint configuration
+## Project Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- src/components: UI bilesenleri
+- src/pages: Sayfa seviyesi bilesenler
+- src/services: API ve auth servisleri
+- src/constants: Ortak sabitler
+- src/utils: Yardimci fonksiyonlar
+
+## Prerequisites
+
+- Node.js 22.x (onerilen)
+- npm
+
+## Environment Setup
+
+1. Ornek dosyayi kopyalayin:
+
+   cp .env.example .env
+
+2. Backend URL degerini ayarlayin:
+
+- VITE_API_BASE_URL=http://localhost:8056
+
+Not:
+
+- URL sonunda slash olmamasi onerilir.
+- .env dosyasi versiyon kontrolune dahil edilmez.
+
+## Development
+
+Bagimliliklari yukleyin:
+
+    npm install
+
+Gelistirme sunucusunu baslatin:
+
+    npm run dev
+
+Varsayilan adres:
+
+- http://localhost:5173
+
+## Build and Preview
+
+Production build:
+
+    npm run build
+
+Build onizleme:
+
+    npm run preview
+
+## Lint
+
+Kod kalitesi kontrolu:
+
+    npm run lint
+
+## API Configuration
+
+API temel adresi su sekilde cozulur:
+
+1. VITE_API_BASE_URL tanimliysa bu kullanilir
+2. Development modda fallback: http://localhost:8056
+3. Production modda fallback: https://panel.detectivesimulator.com
+
+## Related Repository
+
+Ana backend ayri repoda bulunur:
+
+- detectivesimulator-directus

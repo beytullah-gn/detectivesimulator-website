@@ -12,17 +12,19 @@ export default function InterrogationModal({
   loading,
   disabled,
 }) {
-  if (!character) return null;
-
   const [searchTerm, setSearchTerm] = useState("");
+
+  const safeConversation = Array.isArray(conversation) ? conversation : [];
 
   const filteredConversation = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return conversation;
-    return conversation.filter((msg) =>
+    if (!term) return safeConversation;
+    return safeConversation.filter((msg) =>
       String(msg?.content || "").toLowerCase().includes(term)
     );
-  }, [conversation, searchTerm]);
+  }, [safeConversation, searchTerm]);
+
+  if (!isOpen || !character) return null;
 
   const questionSuggestions = [
     "Olay sırasında tam olarak neredeydin?",
@@ -53,7 +55,7 @@ export default function InterrogationModal({
               />
             </div>
             <div className="conversation">
-              {conversation.length === 0 ? (
+              {safeConversation.length === 0 ? (
                 <div className="empty-state">
                   <p>Henüz soru sormadınız. Aşağıdan bir soru yazın.</p>
                 </div>

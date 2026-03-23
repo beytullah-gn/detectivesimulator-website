@@ -41,7 +41,9 @@ function App() {
   const [token, setToken] = useState(() => getStoredToken());
   const [user, setUser] = useState(null);
   const [view, setView] = useState(token ? VIEW.SCENARIOS : VIEW.LANDING);
-  const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [scenarioLoading, setScenarioLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
   const [scenarios, setScenarios] = useState([]);
   const [selectedScenario, setSelectedScenario] = useState(null);
@@ -86,8 +88,7 @@ function App() {
         return;
       }
       const saved = JSON.parse(raw);
-      const savedStatus = saved?.session?.status;
-      if (saved?.session?.sessionId && savedStatus !== "completed") {
+      if (saved?.session?.sessionId) {
         setSession(saved.session || null);
         setSelectedScenario(saved.selectedScenario || null);
         setScenarioMedia(saved.scenarioMedia || []);
@@ -151,6 +152,25 @@ function App() {
     setError(message || "");
   }
 
+  function isAuthError(error) {
+    const message = String(error?.message || "").toLowerCase();
+    return (
+      message.includes("token expired") ||
+      message.includes("unauthorized") ||
+      message.includes("yetkisiz")
+    );
+  }
+
+  function handleApiError(error, fallbackMessage) {
+    console.error(fallbackMessage || "API error:", error);
+    if (isAuthError(error)) {
+      setErrorMessage("Oturumunuzun süresi doldu. Lütfen tekrar giriş yapın.");
+      handleLogout();
+      return;
+    }
+    setErrorMessage(error?.message || fallbackMessage || "Beklenmeyen bir hata oluştu.");
+  }
+
   function resetSessionState() {
     setSession(null);
     setConversations({});
@@ -180,22 +200,20 @@ function App() {
       const response = await fetchUser(token);
       setUser(response);
     } catch (error) {
-      console.error("User fetch error:", error);
-      handleLogout();
+      handleApiError(error, "User fetch error");
     }
   }
 
   async function handleLoadScenarios() {
-    setLoading(true);
+    setScenarioLoading(true);
     setErrorMessage("");
     try {
       const data = await fetchScenarios(token);
       setScenarios(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Scenario fetch error:", error);
-      setErrorMessage(error.message);
+      handleApiError(error, "Scenario fetch error");
     } finally {
-      setLoading(false);
+      setScenarioLoading(false);
     }
   }
 
@@ -205,12 +223,12 @@ function App() {
       const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
       setSessionHistory(sessions);
     } catch (error) {
-      console.error("Session history error:", error);
+      handleApiError(error, "Session history error");
     }
   }
 
   async function handleLoadScenarioData(scenarioId) {
-    setLoading(true);
+    setScenarioLoading(true);
     setErrorMessage("");
     try {
       const [charactersData, mediaData, relationsData] = await Promise.all([
@@ -238,10 +256,9 @@ function App() {
       }, {});
       setRelationsByCharacter(relationMap);
     } catch (error) {
-      console.error("Scenario data fetch error:", error);
-      setErrorMessage(error.message);
+      handleApiError(error, "Scenario data fetch error");
     } finally {
-      setLoading(false);
+      setScenarioLoading(false);
     }
   }
 
@@ -251,7 +268,7 @@ function App() {
     const email = formData.get("email");
     const password = formData.get("password");
 
-    setLoading(true);
+    setAuthLoading(true);
     setErrorMessage("");
 
     try {
@@ -260,10 +277,9 @@ function App() {
       setToken(accessToken);
       setView(VIEW.SCENARIOS);
     } catch (error) {
-      console.error("Login error:", error);
-      setErrorMessage(error.message);
+      handleApiError(error, "Login error");
     } finally {
-      setLoading(false);
+      setAuthLoading(false);
     }
   }
 
@@ -279,17 +295,16 @@ function App() {
       return;
     }
 
-    setLoading(true);
+    setAuthLoading(true);
     setErrorMessage("");
 
     try {
       await register({ email, password });
       setView(VIEW.LOGIN);
     } catch (error) {
-      console.error("Register error:", error);
-      setErrorMessage(error.message);
+      handleApiError(error, "Register error");
     } finally {
-      setLoading(false);
+      setAuthLoading(false);
     }
   }
 
@@ -301,18 +316,19 @@ function App() {
 
   async function handleStartSession() {
     if (!selectedScenario) return;
-    setLoading(true);
+    setActionLoading(true);
     setErrorMessage("");
     try {
       const data = await startSession(selectedScenario.id, token);
       setSession(data);
       setFinalResult(null);
       await handleLoadSessionHistory();
+      return true;
     } catch (error) {
-      console.error("Session start error:", error);
-      setErrorMessage(error.message);
+      handleApiError(error, "Session start error");
+      return false;
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   }
 
@@ -338,7 +354,7 @@ function App() {
 
     if (isSessionCompleted) return;
 
-    setLoading(true);
+    setActionLoading(true);
     setErrorMessage("");
 
     const userQuestion = trimmedQuestion;
@@ -364,16 +380,15 @@ function App() {
         };
       });
     } catch (error) {
-      console.error("Interrogation error:", error);
-      setErrorMessage(error.message);
+      handleApiError(error, "Interrogation error");
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   }
 
   async function handleUseHint() {
     if (!session?.sessionId || isSessionCompleted) return;
-    setLoading(true);
+    setActionLoading(true);
     setErrorMessage("");
     try {
       const data = await useHint(session.sessionId, token);
@@ -381,10 +396,9 @@ function App() {
         setHints((prev) => [...prev, data.hint]);
       }
     } catch (error) {
-      console.error("Hint error:", error);
-      setErrorMessage(error.message);
+      handleApiError(error, "Hint error");
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   }
 
@@ -400,7 +414,7 @@ function App() {
       return;
     }
 
-    setLoading(true);
+    setActionLoading(true);
     setErrorMessage("");
 
     try {
@@ -414,20 +428,19 @@ function App() {
       setSession((prev) => (prev ? { ...prev, status: "completed" } : prev));
       await handleLoadSessionHistory();
     } catch (error) {
-      console.error("Final answer error:", error);
-      setErrorMessage(error.message);
+      handleApiError(error, "Final answer error");
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   }
 
   function handleGoHome() {
     handleResetFlow();
-    setView(VIEW.SCENARIOS);
+    setView(isLoggedIn ? VIEW.SCENARIOS : VIEW.LANDING);
   }
 
   async function handleResumeSession(sessionId) {
-    setLoading(true);
+    setScenarioLoading(true);
     setErrorMessage("");
     try {
       const data = await fetchSessionDetail(sessionId, token);
@@ -465,10 +478,9 @@ function App() {
 
       setView(VIEW.SCENARIOS);
     } catch (error) {
-      console.error("Session resume error:", error);
-      setErrorMessage(error.message);
+      handleApiError(error, "Session resume error");
     } finally {
-      setLoading(false);
+      setScenarioLoading(false);
     }
   }
 
@@ -523,7 +535,7 @@ function App() {
             footerLabel="Hesabın yok mu? Kayıt Ol"
             onSubmit={handleLoginSubmit}
             onFooterClick={() => setView(VIEW.REGISTER)}
-            loading={loading}
+            loading={authLoading}
           />
         ) : null}
 
@@ -534,7 +546,7 @@ function App() {
             footerLabel="Zaten hesabın var mı? Giriş Yap"
             onSubmit={handleRegisterSubmit}
             onFooterClick={() => setView(VIEW.LOGIN)}
-            loading={loading}
+            loading={authLoading}
             showConfirmPassword
           />
         ) : null}
@@ -546,6 +558,7 @@ function App() {
             scenarioMedia={scenarioMedia}
             characters={characters}
             relationsByCharacter={relationsByCharacter}
+            userKey={user?.id || user?.email || ""}
             onScenarioSelect={handleScenarioSelect}
             onRefreshScenarios={handleLoadScenarios}
             sessionHistory={sessionHistory}
@@ -561,7 +574,8 @@ function App() {
             onUseHint={handleUseHint}
             hints={hints}
             onReset={handleResetFlow}
-            loading={loading}
+            scenarioLoading={scenarioLoading}
+            actionLoading={actionLoading}
             finalAnswer={finalAnswer}
             onToggleGuilty={handleToggleGuilty}
             onExplanationChange={(value) =>

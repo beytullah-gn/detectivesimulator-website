@@ -15,6 +15,7 @@ export default function ScenarioPage({
   scenarioMedia,
   characters,
   relationsByCharacter,
+  userKey,
   onScenarioSelect,
   onRefreshScenarios,
   sessionHistory,
@@ -30,7 +31,8 @@ export default function ScenarioPage({
   onUseHint,
   hints,
   onReset,
-  loading,
+  scenarioLoading,
+  actionLoading,
   finalAnswer,
   onToggleGuilty,
   onExplanationChange,
@@ -64,8 +66,9 @@ export default function ScenarioPage({
     setActiveTab("documents");
   };
 
-  const handleStartSession = () => {
-    onStartSession();
+  const handleStartSession = async () => {
+    const started = await onStartSession();
+    if (!started) return;
     setCurrentStage(3);
     setActiveTab("suspects");
   };
@@ -85,6 +88,13 @@ export default function ScenarioPage({
 
   const handleMoveToFinalDecision = () => {
     setCurrentStage(4);
+  };
+
+  const handleBackToInvestigation = () => {
+    setCurrentStage(3);
+    if (!activeTab || activeTab === "hints") {
+      setActiveTab("interrogation");
+    }
   };
 
   const handleReset = () => {
@@ -118,7 +128,7 @@ export default function ScenarioPage({
             selectedScenarioId={selectedScenario?.id}
             onSelect={handleScenarioSelect}
             onRefresh={onRefreshScenarios}
-            loading={loading}
+            loading={scenarioLoading}
           />
           <div className="panel how-to-panel">
             <h2>Nasıl Oynanır?</h2>
@@ -193,8 +203,8 @@ export default function ScenarioPage({
             </div>
             <div className="header-actions">
               {currentStage === 2 && !sessionActive && (
-                <button type="button" onClick={handleStartSession} disabled={loading}>
-                  {loading ? "Başlatılıyor..." : "Soruşturmayı Başlat"}
+                <button type="button" onClick={handleStartSession} disabled={actionLoading}>
+                  {actionLoading ? "Başlatılıyor..." : "Soruşturmayı Başlat"}
                 </button>
               )}
               <button type="button" className="secondary" onClick={handleReset}>
@@ -246,6 +256,7 @@ export default function ScenarioPage({
                               <CharacterDetailCard
                                 character={character}
                                 relations={relationsByCharacter?.[character.id] || []}
+                                userKey={userKey}
                               />
                             </div>
                           )}
@@ -301,6 +312,7 @@ export default function ScenarioPage({
                               <CharacterDetailCard
                                 character={character}
                                 relations={relationsByCharacter?.[character.id] || []}
+                                userKey={userKey}
                               />
                             </div>
                           )}
@@ -336,7 +348,7 @@ export default function ScenarioPage({
                 )}
 
                 {activeTab === "hints" && (
-                  <HintsPanel hints={hints} onUseHint={onUseHint} loading={loading} />
+                  <HintsPanel hints={hints} onUseHint={onUseHint} loading={actionLoading} />
                 )}
               </div>
 
@@ -350,24 +362,33 @@ export default function ScenarioPage({
 
           {/* Stage 4: Final Decision */}
           {currentStage === 4 && sessionActive && (
-                <div className="stage-container">
-                  <div className="stage-header">
-                    <h3>Final Kararınızı Verin</h3>
-                    <p>Suçluları seçin ve gerekçenizi açıklayın</p>
-                  </div>
+            <div className="stage-container">
+              <div className="stage-header">
+                <h3>Final Kararınızı Verin</h3>
+                <p>Suçluları seçin ve gerekçenizi açıklayın</p>
+              </div>
 
-                  <FinalDecisionPanel
-                    characters={characters}
-                    selectedGuilty={finalAnswer.selected}
-                    explanation={finalAnswer.explanation}
-                    onToggleGuilty={onToggleGuilty}
-                    onExplanationChange={onExplanationChange}
-                    onSubmit={onSubmitFinalAnswer}
-                    loading={loading}
-                    result={finalResult}
-                  />
+              {!finalResult && (
+                <div className="stage-actions">
+                  <button type="button" className="secondary" onClick={handleBackToInvestigation}>
+                    ← Sorgulamaya Dön
+                  </button>
                 </div>
               )}
+
+              <FinalDecisionPanel
+                characters={characters}
+                selectedGuilty={finalAnswer.selected}
+                explanation={finalAnswer.explanation}
+                onToggleGuilty={onToggleGuilty}
+                onExplanationChange={onExplanationChange}
+                onSubmit={onSubmitFinalAnswer}
+                loading={actionLoading}
+                result={finalResult}
+                disabled={Boolean(finalResult)}
+              />
+            </div>
+          )}
           </section>
         )}
 
@@ -380,7 +401,7 @@ export default function ScenarioPage({
         question={question}
         onQuestionChange={onQuestionChange}
         onAsk={onAskQuestion}
-        loading={loading}
+        loading={actionLoading}
         disabled={Boolean(finalResult)}
       />
     </>

@@ -2,25 +2,27 @@ import { useEffect, useState } from "react";
 import { buildUrl } from "../services/apiClient";
 import { formatCharacterName, getInitials } from "../utils/formatters";
 
-export default function CharacterDetailCard({ character, relations = [] }) {
+export default function CharacterDetailCard({ character, relations = [], userKey = "" }) {
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
     if (!character?.id) return;
+    const storageKey = `ds_notes_${userKey || "guest"}_${character.id}`;
     try {
-      const stored = localStorage.getItem(`ds_notes_${character.id}`);
+      const stored = localStorage.getItem(storageKey);
       setNotes(stored || "");
     } catch (error) {
       console.error("Notes load error:", error);
     }
-  }, [character?.id]);
+  }, [character?.id, userKey]);
 
   const handleNotesChange = (event) => {
     const value = event.target.value;
     setNotes(value);
     if (!character?.id) return;
+    const storageKey = `ds_notes_${userKey || "guest"}_${character.id}`;
     try {
-      localStorage.setItem(`ds_notes_${character.id}`, value);
+      localStorage.setItem(storageKey, value);
     } catch (error) {
       console.error("Notes save error:", error);
     }
