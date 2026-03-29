@@ -1,0 +1,26 @@
+<svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1600" fill="#0B0D10"/>
+  <rect x="44" y="44" width="1112" height="1512" rx="42" fill="url(#bg)"/>
+  <path d="M120 140L1080 140" stroke="#86E1D0" stroke-opacity="0.3" stroke-width="2"/>
+  <path d="M180 310C276 248 362 228 458 248C554 268 640 328 736 336C832 344 918 300 1014 232" stroke="#89EAD7" stroke-opacity="0.52" stroke-width="3"/>
+  <path d="M180 448C276 386 362 366 458 386C554 406 640 466 736 474C832 482 918 438 1014 370" stroke="#89EAD7" stroke-opacity="0.28" stroke-width="3"/>
+  <path d="M180 586C276 524 362 504 458 524C554 544 640 604 736 612C832 620 918 576 1014 508" stroke="#89EAD7" stroke-opacity="0.18" stroke-width="3"/>
+  <circle cx="458" cy="248" r="13" fill="#8EF5E1"/>
+  <circle cx="736" cy="336" r="13" fill="#8EF5E1"/>
+  <circle cx="832" cy="344" r="13" fill="#8EF5E1"/>
+  <rect x="170" y="780" width="860" height="320" rx="28" fill="#0F171A" stroke="#87E4D3" stroke-opacity="0.28" stroke-width="2"/>
+  <rect x="206" y="832" width="164" height="28" rx="14" fill="#87E4D3" fill-opacity="0.22"/>
+  <rect x="206" y="892" width="788" height="2" fill="#87E4D3" fill-opacity="0.12"/>
+  <rect x="206" y="952" width="788" height="2" fill="#87E4D3" fill-opacity="0.12"/>
+  <rect x="206" y="1012" width="788" height="2" fill="#87E4D3" fill-opacity="0.12"/>
+  <rect x="206" y="1072" width="542" height="2" fill="#87E4D3" fill-opacity="0.12"/>
+  <text x="168" y="1228" fill="#E9FFF9" font-family="Georgia, serif" font-size="98" letter-spacing="8">MASLAK</text>
+  <text x="168" y="1340" fill="#E9FFF9" font-family="Georgia, serif" font-size="98" letter-spacing="8">DATA LEAK</text>
+  <text x="168" y="1450" fill="#88E7D6" fill-opacity="0.78" font-family="'Courier New', monospace" font-size="24" letter-spacing="9">INTERNAL EXPORT TRACE / SEGMENTATION MODEL BREACH</text>
+  <defs>
+    <linearGradient id="bg" x1="140" y1="76" x2="1040" y2="1520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#122024"/>
+      <stop offset="1" stop-color="#0A0E11"/>
+    </linearGradient>
+  </defs>
+</svg>

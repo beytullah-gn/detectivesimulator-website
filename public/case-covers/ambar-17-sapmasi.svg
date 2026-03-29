@@ -1,0 +1,22 @@
+<svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1600" fill="#081015"/>
+  <rect x="44" y="44" width="1112" height="1512" rx="42" fill="url(#bg)"/>
+  <path d="M184 262H1016" stroke="#78C8D9" stroke-opacity="0.24" stroke-width="2"/>
+  <path d="M268 734V356H520V734" stroke="#85D6E7" stroke-opacity="0.32" stroke-width="3"/>
+  <path d="M680 734V356H932V734" stroke="#85D6E7" stroke-opacity="0.32" stroke-width="3"/>
+  <path d="M520 356L600 282L680 356" stroke="#A1ECFA" stroke-opacity="0.44" stroke-width="4"/>
+  <path d="M392 430L456 482L392 534" stroke="#A1ECFA" stroke-opacity="0.36" stroke-width="5"/>
+  <path d="M808 430L744 482L808 534" stroke="#A1ECFA" stroke-opacity="0.36" stroke-width="5"/>
+  <rect x="344" y="830" width="512" height="122" rx="24" fill="#102129" stroke="#85D6E7" stroke-opacity="0.28" stroke-width="2"/>
+  <text x="404" y="910" fill="#CFF4FA" font-family="'Courier New', monospace" font-size="58" letter-spacing="10">WAREHOUSE 17</text>
+  <path d="M158 1006H1042" stroke="#78C8D9" stroke-opacity="0.22" stroke-width="2"/>
+  <text x="156" y="1132" fill="#E8FAFD" font-family="Georgia, serif" font-size="102" letter-spacing="8">WAREHOUSE</text>
+  <text x="156" y="1248" fill="#E8FAFD" font-family="Georgia, serif" font-size="102" letter-spacing="8">17 DRIFT</text>
+  <text x="156" y="1438" fill="#7BCDDD" fill-opacity="0.74" font-family="'Courier New', monospace" font-size="24" letter-spacing="10">COLD-CHAIN REROUTE / FALSE REFRIGERATION ALERT</text>
+  <defs>
+    <linearGradient id="bg" x1="122" y1="70" x2="1072" y2="1534" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#11232C"/>
+      <stop offset="1" stop-color="#060D12"/>
+    </linearGradient>
+  </defs>
+</svg>

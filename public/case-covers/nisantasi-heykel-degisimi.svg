@@ -1,0 +1,19 @@
+<svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1600" fill="#130E0B"/>
+  <rect x="42" y="42" width="1116" height="1516" rx="42" fill="url(#bg)"/>
+  <circle cx="878" cy="280" r="132" fill="#E6B18F" fill-opacity="0.08"/>
+  <path d="M596 260C540 308 520 396 520 482C520 578 552 638 600 690C648 638 680 578 680 482C680 396 660 308 604 260H596Z" fill="#EBC2A8" fill-opacity="0.18" stroke="#F0CCB5" stroke-opacity="0.34" stroke-width="3"/>
+  <rect x="520" y="690" width="160" height="58" rx="18" fill="#EBC2A8" fill-opacity="0.12" stroke="#F0CCB5" stroke-opacity="0.26" stroke-width="2"/>
+  <rect x="450" y="748" width="300" height="88" rx="22" fill="#201510" stroke="#F0CCB5" stroke-opacity="0.2" stroke-width="2"/>
+  <path d="M166 954H1034" stroke="#E3B090" stroke-opacity="0.26" stroke-width="2"/>
+  <text x="158" y="1088" fill="#FCEBE3" font-family="Georgia, serif" font-size="104" letter-spacing="7">NISANTASI</text>
+  <text x="158" y="1204" fill="#FCEBE3" font-family="Georgia, serif" font-size="104" letter-spacing="7">SCULPTURE</text>
+  <text x="158" y="1320" fill="#FCEBE3" font-family="Georgia, serif" font-size="104" letter-spacing="7">SWAP</text>
+  <text x="158" y="1440" fill="#E3B090" fill-opacity="0.74" font-family="'Courier New', monospace" font-size="24" letter-spacing="10">PRIVATE BRUNCH / REPLICA SUBSTITUTION</text>
+  <defs>
+    <linearGradient id="bg" x1="110" y1="76" x2="1076" y2="1528" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#33201A"/>
+      <stop offset="1" stop-color="#0F0908"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ScenarioList from "../components/ScenarioList";
 import ScenarioMediaList from "../components/ScenarioMediaList";
 import HintsPanel from "../components/HintsPanel";
@@ -45,6 +45,13 @@ export default function ScenarioPage({
   const [activeTab, setActiveTab] = useState("documents");
   const [expandedCharacterId, setExpandedCharacterId] = useState(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const currentStageView = !selectedScenario
+    ? 1
+    : finalResult
+    ? 4
+    : sessionActive
+    ? Math.max(currentStage, 3)
+    : Math.max(currentStage, 2);
 
   const activeSessions = (sessionHistory || []).filter(
     (item) => item?.status === "continues"
@@ -59,6 +66,36 @@ export default function ScenarioPage({
     { id: "interrogation", label: "Sorgulama", icon: "🔍" },
     { id: "hints", label: "İpuçları", icon: "💡" },
   ];
+
+  const formatSessionMeta = (item) => {
+    const questions = Number(item?.question_count || 0);
+    const hintsUsed = Number(item?.hint_count || 0);
+    const stage = Number(item?.current_stage || 1);
+    return `Asama ${stage} • ${questions} soru • ${hintsUsed} ipucu`;
+  };
+
+  const formatScenarioHeaderMeta = (scenario) => {
+    const parts = [];
+
+    if (scenario?.category?.title) {
+      parts.push(scenario.category.title);
+    }
+
+    if (scenario?.difficulty) {
+      const labels = {
+        easy: "Kolay",
+        normal: "Orta",
+        hard: "Zor",
+      };
+      parts.push(labels[scenario.difficulty] || "Standart");
+    }
+
+    if (scenario?.estimated_duration) {
+      parts.push(`${scenario.estimated_duration} dk`);
+    }
+
+    return parts.join(" • ");
+  };
 
   const handleScenarioSelect = (scenario) => {
     onScenarioSelect(scenario);
@@ -105,19 +142,6 @@ export default function ScenarioPage({
     setActiveTab("documents");
   };
 
-  useEffect(() => {
-    if (!selectedScenario) return;
-    if (finalResult) {
-      setCurrentStage(4);
-      return;
-    }
-    if (sessionActive) {
-      setCurrentStage((prev) => (prev < 3 ? 3 : prev));
-      return;
-    }
-    setCurrentStage((prev) => (prev === 1 ? 2 : prev));
-  }, [selectedScenario, sessionActive, finalResult]);
-
   return (
     <>
       {/* Show scenario list only when no scenario is selected */}
@@ -159,7 +183,11 @@ export default function ScenarioPage({
                           <li key={item.id} className="session-item">
                             <div>
                               <strong>{item?.scenario?.title || "Senaryo"}</strong>
+                              {item?.scenario?.category?.title ? (
+                                <p>{item.scenario.category.title}</p>
+                              ) : null}
                               <p>{item?.scenario?.description || "Açıklama yok"}</p>
+                              <p>{formatSessionMeta(item)}</p>
                             </div>
                             <button type="button" onClick={() => onResumeSession?.(item.id)}>
                               Devam Et
@@ -177,7 +205,11 @@ export default function ScenarioPage({
                           <li key={item.id} className="session-item">
                             <div>
                               <strong>{item?.scenario?.title || "Senaryo"}</strong>
+                              {item?.scenario?.category?.title ? (
+                                <p>{item.scenario.category.title}</p>
+                              ) : null}
                               <p>{item?.scenario?.description || "Açıklama yok"}</p>
+                              <p>{formatSessionMeta(item)}</p>
                             </div>
                             <button type="button" className="ghost" onClick={() => onResumeSession?.(item.id)}>
                               Sonucu Gör
@@ -194,15 +226,20 @@ export default function ScenarioPage({
         </section>
       ) : (
         <section className="panel scenario-detail" style={{ maxWidth: "1400px", margin: "0 auto" }}>
-          {sessionActive && <ProgressTracker currentStage={currentStage} />}
+          {sessionActive && <ProgressTracker currentStage={currentStageView} />}
 
           <div className="panel-header">
             <div>
               <h2>{selectedScenario.title}</h2>
-              <p>{selectedScenario.description}</p>
+              <p>{selectedScenario.teaser || selectedScenario.description}</p>
+              {formatScenarioHeaderMeta(selectedScenario) ? (
+                <p className="scenario-header-meta">
+                  {formatScenarioHeaderMeta(selectedScenario)}
+                </p>
+              ) : null}
             </div>
             <div className="header-actions">
-              {currentStage === 2 && !sessionActive && (
+              {currentStageView === 2 && !sessionActive && (
                 <button type="button" onClick={handleStartSession} disabled={actionLoading}>
                   {actionLoading ? "Başlatılıyor..." : "Soruşturmayı Başlat"}
                 </button>
@@ -214,7 +251,7 @@ export default function ScenarioPage({
           </div>
 
           {/* Stage 2: Tab-based Information View */}
-          {currentStage === 2 && (
+          {currentStageView === 2 && (
             <div className="stage-container">
               <TabNavigation tabs={tabs.slice(0, 2)} activeTab={activeTab} onTabChange={setActiveTab} />
               
@@ -270,7 +307,7 @@ export default function ScenarioPage({
           )}
 
           {/* Stage 3: Interrogation with Tabs */}
-          {currentStage === 3 && sessionActive && (
+          {currentStageView === 3 && sessionActive && (
             <div className="stage-container">
               <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -361,7 +398,7 @@ export default function ScenarioPage({
           )}
 
           {/* Stage 4: Final Decision */}
-          {currentStage === 4 && sessionActive && (
+          {currentStageView === 4 && sessionActive && (
             <div className="stage-container">
               <div className="stage-header">
                 <h3>Final Kararınızı Verin</h3>

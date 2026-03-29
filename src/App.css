@@ -156,6 +156,12 @@
   color: rgba(244, 234, 215, 0.78);
 }
 
+.panel-subtitle {
+  margin: 0.3rem 0 0;
+  color: rgba(244, 234, 215, 0.62);
+  font-size: 0.9rem;
+}
+
 .how-to-panel h2 {
   margin-top: 0;
   color: #f1d08a;
@@ -360,6 +366,34 @@ button.ghost {
 .card span {
   font-size: 0.85rem;
   color: rgba(244, 234, 215, 0.65);
+}
+
+.scenario-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.scenario-category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 215, 166, 0.24);
+  background: rgba(255, 215, 166, 0.08);
+  color: #f1d08a;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.scenario-header-meta {
+  margin: 0.75rem 0 0;
+  color: rgba(244, 234, 215, 0.68);
+  font-size: 0.92rem;
 }
 
 .scenario-detail .detail-grid {
@@ -1261,6 +1295,18 @@ button.ghost {
   margin: 0;
   color: rgba(244, 234, 215, 0.7);
   font-size: 0.9rem;
+}
+
+.relation-tension {
+  display: inline-flex;
+  margin-top: 0.45rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(217, 164, 65, 0.32);
+  background: rgba(217, 164, 65, 0.12);
+  color: #f1d08a;
+  font-size: 0.75rem;
+  text-transform: capitalize;
 }
 
 /* Full width detail view */

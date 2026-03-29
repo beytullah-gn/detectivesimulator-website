@@ -1,0 +1,33 @@
+<svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="1600" fill="#120D09"/>
+  <rect x="48" y="48" width="1104" height="1504" rx="44" fill="url(#bg)"/>
+  <rect x="92" y="92" width="1016" height="1416" rx="28" stroke="rgba(244,220,170,0.22)" stroke-width="2"/>
+  <path d="M142 232H1058" stroke="#E0B26A" stroke-opacity="0.4" stroke-width="2"/>
+  <circle cx="218" cy="232" r="10" fill="#E0B26A"/>
+  <circle cx="982" cy="232" r="10" fill="#E0B26A"/>
+  <path d="M214 430L468 286L722 430V742L468 886L214 742V430Z" fill="#B97E30" fill-opacity="0.14" stroke="#E6B86D" stroke-opacity="0.48" stroke-width="3"/>
+  <path d="M468 286V886" stroke="#E6B86D" stroke-opacity="0.36" stroke-width="2"/>
+  <path d="M722 430L468 574L214 430" stroke="#E6B86D" stroke-opacity="0.36" stroke-width="2"/>
+  <path d="M722 430V742L468 886" stroke="#E6B86D" stroke-opacity="0.36" stroke-width="2"/>
+  <rect x="756" y="330" width="210" height="328" rx="18" fill="#20150D" stroke="#E6B86D" stroke-opacity="0.4" stroke-width="2"/>
+  <rect x="792" y="378" width="138" height="18" rx="9" fill="#E6B86D" fill-opacity="0.4"/>
+  <rect x="792" y="432" width="138" height="18" rx="9" fill="#E6B86D" fill-opacity="0.18"/>
+  <rect x="792" y="486" width="138" height="18" rx="9" fill="#E6B86D" fill-opacity="0.18"/>
+  <rect x="792" y="540" width="94" height="18" rx="9" fill="#E6B86D" fill-opacity="0.18"/>
+  <rect x="170" y="1032" width="860" height="2" fill="url(#line)"/>
+  <text x="170" y="1108" fill="#F5E6C8" font-family="Georgia, serif" font-size="110" letter-spacing="8">GALATA</text>
+  <text x="170" y="1228" fill="#F5E6C8" font-family="Georgia, serif" font-size="110" letter-spacing="8">PATENT</text>
+  <text x="170" y="1348" fill="#D4A15D" font-family="'Courier New', monospace" font-size="58" letter-spacing="18">DOSYASI</text>
+  <text x="170" y="1450" fill="#E6B86D" fill-opacity="0.66" font-family="'Courier New', monospace" font-size="24" letter-spacing="10">CORPORATE SABOTAGE CASE FILE</text>
+  <defs>
+    <linearGradient id="bg" x1="140" y1="64" x2="1048" y2="1536" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2A1D13"/>
+      <stop offset="1" stop-color="#100B07"/>
+    </linearGradient>
+    <linearGradient id="line" x1="170" y1="1033" x2="1030" y2="1033" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E6B86D" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#E6B86D" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#E6B86D" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>

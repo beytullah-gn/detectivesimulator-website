@@ -1,0 +1,769 @@
+.page {
+  position: relative;
+  overflow: hidden;
+}
+
+.page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(207, 163, 82, 0.12), transparent 28%),
+    radial-gradient(circle at 82% 12%, rgba(106, 76, 42, 0.16), transparent 24%);
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.25rem 0 4rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0 1.4rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.brand span:last-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.brand strong {
+  font-family: var(--font-display), serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.03em;
+}
+
+.brand small {
+  color: rgba(244, 239, 226, 0.72);
+  font-size: 0.86rem;
+}
+
+.brandMark {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  border: 1px solid rgba(245, 209, 132, 0.32);
+  background:
+    linear-gradient(145deg, rgba(211, 160, 76, 0.24), rgba(68, 45, 23, 0.92));
+  box-shadow:
+    0 18px 32px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 233, 184, 0.2);
+  font-family: var(--font-mono), monospace;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.navLink,
+.inlineGhostLink {
+  color: rgba(244, 239, 226, 0.74);
+}
+
+.content,
+.detailPage {
+  display: grid;
+  gap: 4.5rem;
+}
+
+.hero,
+.detailHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 0.85fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.heroCopy,
+.detailHeroCopy,
+.heroPanel,
+.heroVisual,
+.collectionColumn,
+.intentCard,
+.detailCard,
+.footerCallout {
+  border: 1px solid rgba(240, 195, 111, 0.16);
+  background:
+    linear-gradient(180deg, rgba(27, 21, 15, 0.96), rgba(15, 11, 7, 0.94));
+  box-shadow:
+    0 28px 48px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 231, 189, 0.08);
+}
+
+.heroCopy,
+.detailHeroCopy {
+  border-radius: 34px;
+  padding: clamp(2rem, 4vw, 3.5rem);
+}
+
+.heroPanel,
+.heroVisual,
+.collectionColumn,
+.intentCard,
+.detailCard,
+.footerCallout {
+  border-radius: 28px;
+  padding: 1.6rem;
+}
+
+.eyebrow,
+.sectionKicker,
+.panelLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 209, 132, 0.18);
+  color: #f2cc81;
+  background: rgba(94, 66, 31, 0.22);
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.heroTitle {
+  margin: 1.2rem 0 1rem;
+  font-family: var(--font-display), serif;
+  font-size: clamp(3rem, 7vw, 5.4rem);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.heroLead {
+  max-width: 62ch;
+  color: rgba(244, 239, 226, 0.78);
+  font-size: 1.04rem;
+  line-height: 1.75;
+}
+
+.heroActions,
+.caseActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.heroActions {
+  margin-top: 1.6rem;
+}
+
+.heroVisual,
+.collectionColumn {
+  display: grid;
+  gap: 1rem;
+}
+
+.heroPanelLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.primaryButton,
+.secondaryButton,
+.inlineLink,
+.inlineGhostLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  padding: 0.9rem 1.3rem;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #f0be63, #ba7d2f);
+  color: #23160b;
+  font-weight: 700;
+  box-shadow: 0 14px 28px rgba(186, 125, 47, 0.24);
+}
+
+.secondaryButton,
+.navLink,
+.inlineGhostLink {
+  border: 1px solid rgba(240, 195, 111, 0.2);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.primaryButton:hover,
+.secondaryButton:hover,
+.inlineLink:hover,
+.inlineGhostLink:hover,
+.navLink:hover {
+  transform: translateY(-1px);
+}
+
+.inlineLink {
+  padding-left: 0;
+  padding-right: 0;
+  color: #f2cc81;
+  font-weight: 600;
+}
+
+.categoryBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: fit-content;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 195, 111, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f2cc81;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.statRow,
+.metaRow,
+.caseMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.statRow {
+  margin-top: 2rem;
+}
+
+.statCard,
+.metaRow span,
+.caseMeta span {
+  min-width: 0;
+  border-radius: 18px;
+  border: 1px solid rgba(240, 195, 111, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.statCard {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.95rem 1rem;
+}
+
+.statCard strong {
+  font-family: var(--font-display), serif;
+  font-size: 1.65rem;
+}
+
+.statCard span,
+.metaRow span,
+.caseMeta span {
+  color: rgba(244, 239, 226, 0.72);
+}
+
+.metaRow span,
+.caseMeta span {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.92rem;
+}
+
+.heroPanel h2,
+.sectionHeader h2,
+.detailCard h2,
+.footerCallout h2 {
+  margin: 0.9rem 0 0.8rem;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1;
+}
+
+.heroPanel p,
+.sectionHeader p,
+.workflowCard p,
+.caseCard p,
+.featureCard p,
+.detailCard p,
+.evidenceContent,
+.footerCallout p {
+  color: rgba(244, 239, 226, 0.76);
+  line-height: 1.7;
+}
+
+.panelDivider {
+  width: 100%;
+  height: 1px;
+  margin: 1.3rem 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(240, 195, 111, 0.4),
+    transparent
+  );
+}
+
+.featureBulletList,
+.evidenceList,
+.suspectGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.featureBulletList {
+  padding-left: 1.1rem;
+}
+
+.catalogSidebar {
+  border-radius: 28px;
+  border: 1px solid rgba(240, 195, 111, 0.16);
+  padding: 1.6rem;
+  background:
+    linear-gradient(180deg, rgba(27, 21, 15, 0.96), rgba(15, 11, 7, 0.94));
+  box-shadow:
+    0 28px 48px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 231, 189, 0.08);
+}
+
+.section {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.sectionHeader {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 720px;
+}
+
+.workflowGrid,
+.caseGrid,
+.coverCaseGrid,
+.featureGrid,
+.detailGrid,
+.categoryGrid,
+.intentGrid,
+.collectionSection,
+.narrativeGrid,
+.faqGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.workflowGrid,
+.featureGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.categoryGrid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.intentGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.collectionSection {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.narrativeGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.faqGrid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.coverCaseGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.caseGrid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.detailGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.workflowCard,
+.caseCard,
+.coverCaseCard,
+.featureCard,
+.evidenceCard,
+.suspectCard,
+.categoryCard,
+.catalogLinkCard,
+.narrativeCard,
+.faqCard {
+  border-radius: 24px;
+  border: 1px solid rgba(240, 195, 111, 0.12);
+  background:
+    linear-gradient(180deg, rgba(25, 19, 14, 0.94), rgba(13, 10, 7, 0.94));
+  padding: 1.35rem;
+}
+
+.workflowCard h3,
+.caseCard h3,
+.coverCaseCard h3,
+.featureCard h3,
+.evidenceCard h3,
+.suspectCard h3,
+.categoryCard h3,
+.faqCard h3 {
+  margin: 0.9rem 0 0.6rem;
+  font-size: 1.15rem;
+}
+
+.catalogHero,
+.categoryHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.9fr);
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+.categoryHero {
+  align-items: start;
+}
+
+.categoryCard {
+  position: relative;
+  overflow: hidden;
+  border-top: 3px solid var(--accent-color, #ba7d2f);
+}
+
+.intentCard {
+  overflow: hidden;
+  border-top: 3px solid var(--accent-color, #ba7d2f);
+  padding: 0;
+}
+
+.coverCaseCard {
+  overflow: hidden;
+  padding: 0;
+}
+
+.categoryCard::after,
+.categoryHero::after {
+  content: "";
+  position: absolute;
+  inset: auto 1.35rem 0 auto;
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-color, #ba7d2f) 20%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+.categoryHero {
+  position: relative;
+}
+
+.categoryCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.intentBody,
+.coverCaseBody {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.intentBody {
+  padding: 1.2rem 1.35rem 1.35rem;
+}
+
+.coverCaseBody {
+  padding: 1.2rem 1.35rem 1.35rem;
+}
+
+.categoryCardTop strong {
+  color: rgba(244, 239, 226, 0.7);
+  font-size: 0.92rem;
+}
+
+.categoryQuote,
+.categoryQuoteLarge {
+  margin: 1rem 0 0;
+  padding: 1rem 1.1rem;
+  border-left: 3px solid var(--accent-color, rgba(240, 195, 111, 0.46));
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(244, 239, 226, 0.76);
+  line-height: 1.65;
+}
+
+.categoryQuoteLarge {
+  margin-top: 1.4rem;
+  font-size: 1.05rem;
+}
+
+.narrativeCard p,
+.faqCard p {
+  margin: 0;
+  color: rgba(244, 239, 226, 0.76);
+  line-height: 1.75;
+}
+
+.faqCard {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.catalogLinkCard {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.catalogLinkCard strong {
+  font-size: 1rem;
+}
+
+.catalogLinkCard span {
+  color: rgba(244, 239, 226, 0.66);
+  font-size: 0.9rem;
+}
+
+.heroArtwork,
+.intentArtwork,
+.coverCaseArtwork,
+.sidebarArtwork {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  background-color: rgba(255, 255, 255, 0.02);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.heroArtwork::after,
+.intentArtwork::after,
+.coverCaseArtwork::after,
+.sidebarArtwork::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 7, 5, 0.06), rgba(8, 7, 5, 0.52)),
+    linear-gradient(135deg, rgba(240, 195, 111, 0.12), transparent 42%);
+}
+
+.heroArtwork {
+  min-height: 640px;
+}
+
+.intentArtwork {
+  min-height: 360px;
+  border-radius: 24px 24px 0 0;
+}
+
+.coverCaseArtwork {
+  min-height: 360px;
+}
+
+.sidebarArtwork {
+  min-height: 280px;
+  margin-bottom: 1rem;
+}
+
+.coverCaseArtworkChip {
+  position: absolute;
+  z-index: 1;
+  top: 1rem;
+  left: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 209, 132, 0.24);
+  background: rgba(19, 14, 10, 0.64);
+  color: #f5d389;
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.heroVisualMeta h2 {
+  margin: 0.2rem 0 0.6rem;
+  font-family: var(--font-display), serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.heroVisualMeta p {
+  margin: 0;
+  color: rgba(244, 239, 226, 0.76);
+  line-height: 1.7;
+}
+
+.workflowIndex {
+  font-family: var(--font-mono), monospace;
+  color: rgba(240, 195, 111, 0.72);
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+}
+
+.footerCallout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  color: rgba(244, 239, 226, 0.6);
+}
+
+.detailPage {
+  padding-top: 1rem;
+}
+
+.detailCard {
+  gap: 1rem;
+}
+
+.evidenceContent {
+  padding-top: 0.7rem;
+  border-top: 1px solid rgba(240, 195, 111, 0.1);
+}
+
+.suspectGrid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.suspectTopline {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.suspectTopline span {
+  color: #f2cc81;
+  font-size: 0.9rem;
+}
+
+.suspectFacts {
+  display: grid;
+  gap: 0.8rem;
+  margin: 1rem 0 0;
+}
+
+.suspectFacts div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.suspectFacts dt {
+  color: rgba(244, 239, 226, 0.5);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.suspectFacts dd {
+  margin: 0;
+  color: rgba(244, 239, 226, 0.85);
+}
+
+@media (max-width: 1024px) {
+  .hero,
+  .detailHero,
+  .catalogHero,
+  .categoryHero,
+  .detailGrid,
+  .intentGrid,
+  .coverCaseGrid,
+  .collectionSection,
+  .narrativeGrid,
+  .workflowGrid,
+  .featureGrid,
+  .footerCallout {
+    grid-template-columns: 1fr;
+  }
+
+  .footerCallout {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .shell {
+    width: min(100% - 1.2rem, 100%);
+    padding-top: 0.8rem;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .topbarActions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .heroCopy,
+  .detailHeroCopy,
+  .heroPanel,
+  .heroVisual,
+  .collectionColumn,
+  .intentCard,
+  .detailCard,
+  .footerCallout {
+    padding: 1.25rem;
+    border-radius: 22px;
+  }
+
+  .heroTitle {
+    font-size: clamp(2.4rem, 16vw, 4rem);
+  }
+
+  .primaryButton,
+  .secondaryButton,
+  .inlineLink,
+  .inlineGhostLink,
+  .catalogLinkCard {
+    width: 100%;
+  }
+
+  .heroActions,
+  .caseActions,
+  .heroPanelLinks {
+    flex-direction: column;
+  }
+
+  .heroArtwork,
+  .intentArtwork,
+  .coverCaseArtwork,
+  .sidebarArtwork {
+    min-height: 280px;
+  }
+}

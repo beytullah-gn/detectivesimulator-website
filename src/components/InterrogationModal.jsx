@@ -14,7 +14,10 @@ export default function InterrogationModal({
 }) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const safeConversation = Array.isArray(conversation) ? conversation : [];
+  const safeConversation = useMemo(
+    () => (Array.isArray(conversation) ? conversation : []),
+    [conversation]
+  );
 
   const filteredConversation = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -26,13 +29,16 @@ export default function InterrogationModal({
 
   if (!isOpen || !character) return null;
 
-  const questionSuggestions = [
-    "Olay sırasında tam olarak neredeydin?",
-    "Olaydan hemen önce ne yaptığını anlatır mısın?",
-    "Diğer şüphelilerle ilişkin nasıl?",
-    "Bu olayla ilgili senden şüphelenmemize sebep olacak bir durum var mı?",
-    "Seninle çelişen bir tanık ifadesi var mı?",
-  ];
+  const questionSuggestions = Array.isArray(character.question_prompts)
+    && character.question_prompts.length > 0
+      ? character.question_prompts
+      : [
+          "Olay sırasında tam olarak neredeydin?",
+          "Olaydan hemen önce ne yaptığını anlatır mısın?",
+          "Diğer şüphelilerle ilişkin nasıl?",
+          "Bu olayla ilgili senden şüphelenmemize sebep olacak bir durum var mı?",
+          "Seninle çelişen bir tanık ifadesi var mı?",
+        ];
 
   return isOpen ? (
     <div className="modal-overlay" onClick={onClose}>

@@ -1,20 +1,19 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { buildUrl } from "../services/apiClient";
 import { formatCharacterName, getInitials } from "../utils/formatters";
 
 export default function CharacterDetailCard({ character, relations = [], userKey = "" }) {
-  const [notes, setNotes] = useState("");
+  const storageKey = character?.id ? `ds_notes_${userKey || "guest"}_${character.id}` : "";
+  const [notes, setNotes] = useState(() => {
+    if (!storageKey) return "";
 
-  useEffect(() => {
-    if (!character?.id) return;
-    const storageKey = `ds_notes_${userKey || "guest"}_${character.id}`;
     try {
-      const stored = localStorage.getItem(storageKey);
-      setNotes(stored || "");
+      return localStorage.getItem(storageKey) || "";
     } catch (error) {
       console.error("Notes load error:", error);
+      return "";
     }
-  }, [character?.id, userKey]);
+  });
 
   const handleNotesChange = (event) => {
     const value = event.target.value;
@@ -102,6 +101,11 @@ export default function CharacterDetailCard({ character, relations = [], userKey
                   <div className="relation-info">
                     <h5>{relatedName}</h5>
                     <p>{item.relation}</p>
+                    {item?.tension_level ? (
+                      <span className="relation-tension">
+                        Gerilim: {item.tension_level}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               );
