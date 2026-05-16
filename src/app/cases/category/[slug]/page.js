@@ -3,15 +3,20 @@ import { notFound } from "next/navigation";
 import styles from "../../../marketing.module.css";
 import CaseArtwork from "@/components/marketing/CaseArtwork";
 import {
+  createSocialImages,
+  DEFAULT_SOCIAL_IMAGE,
+  getScenarioCoverUrl,
+} from "@/lib/content";
+import {
   getPublishedScenarioCategories,
   getPublishedScenarios,
   getScenarioCategoryBySlug,
-} from "@/lib/directus";
+} from "@/lib/content-api";
 
 export const revalidate = 120;
 
 function formatDuration(minutes) {
-  return minutes ? `${minutes} dk` : "Esnek sure";
+  return minutes ? `${minutes} dk` : "Esnek süre";
 }
 
 function formatDifficulty(difficulty) {
@@ -47,16 +52,25 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const category = await getScenarioCategoryBySlug(slug);
+  const [category, featuredScenarios] = await Promise.all([
+    getScenarioCategoryBySlug(slug),
+    getPublishedScenarios({
+      categorySlug: slug,
+      sort: "-popularity_score,title",
+      limit: 1,
+    }),
+  ]);
 
   if (!category) {
     return {
-      title: "Kategori bulunamadi",
+      title: "Kategori bulunamadı",
     };
   }
 
-  const title = category.seo_title || `${category.title} Vakalari`;
+  const title = category.seo_title || `${category.title} Vakaları`;
   const description = category.seo_description || category.description;
+  const socialImage =
+    getScenarioCoverUrl(featuredScenarios[0]) || DEFAULT_SOCIAL_IMAGE;
 
   return {
     title,
@@ -65,6 +79,10 @@ export async function generateMetadata({ params }) {
       title,
       description,
       type: "website",
+      images: createSocialImages(socialImage, `${category.title} kategorisi`),
+    },
+    twitter: {
+      images: createSocialImages(socialImage, `${category.title} kategorisi`),
     },
   };
 }
@@ -110,21 +128,21 @@ export default async function CaseCategoryPage({ params }) {
                 </blockquote>
               ) : null}
               <div className={styles.metaRow}>
-                <span>{scenarios.length} yayinlanmis vaka</span>
-                <span>Kategori landing sayfasi</span>
+                <span>{scenarios.length} yayınlanmış vaka</span>
+                <span>Tematik soruşturma akışı</span>
               </div>
               <div className={styles.heroActions}>
                 <Link href="/cases" className={styles.secondaryButton}>
-                  Tum Kategoriler
+                  Vaka Kataloğu
                 </Link>
                 <Link href="/play" className={styles.primaryButton}>
-                  Oyunu Ac
+                  Oyuna Başla
                 </Link>
               </div>
             </div>
 
             <aside className={styles.heroPanel}>
-              <p className={styles.panelLabel}>One Cikan Dosya</p>
+              <p className={styles.panelLabel}>Öne Çıkan Dosya</p>
               {featuredScenario ? (
                 <>
                   <CaseArtwork
@@ -143,15 +161,15 @@ export default async function CaseCategoryPage({ params }) {
                       href={`/cases/${featuredScenario.slug}`}
                       className={styles.inlineLink}
                     >
-                      Vaka dosyasini ac
+                      Dosyayı İncele
                     </Link>
                     <Link href="/play" className={styles.inlineGhostLink}>
-                      Oyuna gec
+                      Oyuna Başla
                     </Link>
                   </div>
                 </>
               ) : (
-                <p>Bu kategoride henuz yayinlanmis vaka bulunmuyor.</p>
+                <p>Bu kategoride henüz yayınlanmış vaka bulunmuyor.</p>
               )}
             </aside>
           </section>
@@ -159,8 +177,8 @@ export default async function CaseCategoryPage({ params }) {
           {narrativeParagraphs.length > 0 ? (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <span className={styles.sectionKicker}>Kategori Analizi</span>
-                <h2>{category.title} neden ayri bir landing sayfasi?</h2>
+                <span className={styles.sectionKicker}>Kategori Bağlamı</span>
+                <h2>{category.title} dosyalarında ne aramalısın?</h2>
               </div>
               <div className={styles.narrativeGrid}>
                 {narrativeParagraphs.map((paragraph) => (
@@ -175,7 +193,7 @@ export default async function CaseCategoryPage({ params }) {
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionKicker}>Vakalar</span>
-              <h2>{category.title} altindaki yayinlanmis dosyalar</h2>
+              <h2>{category.title} altındaki oynanabilir dosyalar</h2>
             </div>
             <div className={styles.caseGrid}>
               {scenarios.map((scenario) => (
@@ -194,10 +212,10 @@ export default async function CaseCategoryPage({ params }) {
                     <p>{scenario.teaser || scenario.description}</p>
                     <div className={styles.caseActions}>
                       <Link href={`/cases/${scenario.slug}`} className={styles.inlineLink}>
-                        Dosyayi Incele
+                        Dosyayı İncele
                       </Link>
                       <Link href="/play" className={styles.inlineGhostLink}>
-                        Oyuna Git
+                        Oyuna Başla
                       </Link>
                     </div>
                   </div>

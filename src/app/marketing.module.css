@@ -383,6 +383,11 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.collectionColumn .coverCaseGrid {
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+}
+
 .narrativeGrid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -460,6 +465,38 @@
 .coverCaseCard {
   overflow: hidden;
   padding: 0;
+}
+
+.collectionColumn .coverCaseCard {
+  display: grid;
+  grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+  min-height: 220px;
+}
+
+.collectionColumn .coverCaseArtwork {
+  min-height: 0;
+  height: 220px;
+  align-self: start;
+  aspect-ratio: 4 / 5;
+  border-radius: 24px 0 0 24px;
+  background-position: center top;
+}
+
+.collectionColumn .coverCaseBody {
+  min-width: 0;
+  align-content: start;
+  padding: 1.1rem 1.2rem;
+}
+
+.collectionColumn .coverCaseBody p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
+.collectionColumn .caseActions {
+  margin-top: auto;
 }
 
 .categoryCard::after,
@@ -712,6 +749,10 @@
   .footerCallout {
     align-items: flex-start;
   }
+
+  .collectionColumn .coverCaseCard {
+    grid-template-columns: minmax(170px, 240px) minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 720px) {
@@ -765,5 +806,22 @@
   .coverCaseArtwork,
   .sidebarArtwork {
     min-height: 280px;
+  }
+
+  .collectionColumn .coverCaseCard {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .collectionColumn .coverCaseArtwork {
+    width: 100%;
+    height: auto;
+    min-height: 220px;
+    aspect-ratio: 16 / 10;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .collectionColumn .coverCaseBody {
+    padding: 1rem;
   }
 }

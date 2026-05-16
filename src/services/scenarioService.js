@@ -2,7 +2,7 @@ import { apiFetch } from "./apiClient";
 
 export async function fetchScenarios(token) {
   return apiFetch(
-    "/items/scenarios?filter[status][_eq]=published&fields=id,title,slug,teaser,description,estimated_duration,difficulty,category.id,category.title,category.slug,category.accent_color&sort=sort,title&limit=50",
+    "/items/scenarios?filter[status][_eq]=published&fields=id,title,slug,teaser,description,estimated_duration,difficulty,popularity_score,cover_image,category.id,category.title,category.slug,category.accent_color&sort=sort,title&limit=50",
     { token }
   );
 }

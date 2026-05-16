@@ -1,3 +1,5 @@
+import CaseArtwork from "./marketing/CaseArtwork";
+
 function formatDifficulty(difficulty) {
   const labels = {
     easy: "Kolay",
@@ -6,6 +8,10 @@ function formatDifficulty(difficulty) {
   };
 
   return labels[difficulty] || "Standart";
+}
+
+function formatDuration(minutes) {
+  return minutes ? `${minutes} dk` : "Esnek süre";
 }
 
 export default function ScenarioList({
@@ -21,7 +27,7 @@ export default function ScenarioList({
         <div>
           <h2>Senaryolar</h2>
           <p className="panel-subtitle">
-            Kategori bazli katalogdan gelen yayinlanmis vakalari sec.
+            Oynamak istediğin vaka dosyasını seç.
           </p>
         </div>
         <button type="button" className="ghost" onClick={onRefresh}>
@@ -40,15 +46,25 @@ export default function ScenarioList({
               borderLeftColor: scenario?.category?.accent_color || undefined,
             }}
           >
-            <div className="scenario-card-meta">
-              {scenario?.category?.title ? (
-                <span className="scenario-category-chip">{scenario.category.title}</span>
-              ) : null}
-              <span>{formatDifficulty(scenario.difficulty)}</span>
+            <CaseArtwork
+              scenario={scenario}
+              className="scenario-card-artwork"
+              eyebrow="scenario-card-artwork-chip"
+            />
+            <div className="scenario-card-body">
+              <div className="scenario-card-meta">
+                {scenario?.category?.title ? (
+                  <span className="scenario-category-chip">{scenario.category.title}</span>
+                ) : null}
+                <span>{formatDifficulty(scenario.difficulty)}</span>
+              </div>
+              <h3>{scenario.title}</h3>
+              <p>{scenario.teaser || scenario.description}</p>
+              <div className="scenario-card-footer">
+                <span>Tahmini Süre: {formatDuration(scenario.estimated_duration)}</span>
+                <span>{Number(scenario.popularity_score || 0)} oynama</span>
+              </div>
             </div>
-            <h3>{scenario.title}</h3>
-            <p>{scenario.teaser || scenario.description}</p>
-            <span>Tahmini Süre: {scenario.estimated_duration || "-"} dk</span>
           </button>
         ))}
       </div>

@@ -1,21 +1,34 @@
 import Link from "next/link";
 import styles from "../marketing.module.css";
 import CaseArtwork from "@/components/marketing/CaseArtwork";
+import { createSocialImages, DEFAULT_SOCIAL_IMAGE } from "@/lib/content";
 import {
   getPublishedScenarioCategories,
   getPublishedScenarios,
-} from "@/lib/directus";
+} from "@/lib/content-api";
 
 export const revalidate = 120;
 
 export const metadata = {
-  title: "Vaka Katalogu",
+  title: "Vaka Kataloğu",
   description:
-    "Detective Simulator icindeki tum yayinlanmis vakalari ve kategori bazli dedektif dosyalarini inceleyin.",
+    "Detective Simulator içindeki tüm yayınlanmış vakaları, delil dosyalarını ve şüpheli listelerini inceleyin.",
+  openGraph: {
+    images: createSocialImages(
+      DEFAULT_SOCIAL_IMAGE,
+      "Detective Simulator vaka kataloğu"
+    ),
+  },
+  twitter: {
+    images: createSocialImages(
+      DEFAULT_SOCIAL_IMAGE,
+      "Detective Simulator vaka kataloğu"
+    ),
+  },
 };
 
 function formatDuration(minutes) {
-  return minutes ? `${minutes} dk` : "Esnek sure";
+  return minutes ? `${minutes} dk` : "Esnek süre";
 }
 
 function formatDifficulty(difficulty) {
@@ -61,28 +74,28 @@ export default async function CasesIndexPage() {
 
           <section className={styles.catalogHero}>
             <div className={styles.detailHeroCopy}>
-              <span className={styles.eyebrow}>Vaka Katalogu</span>
-              <h1 className={styles.heroTitle}>Kapakli ve kategori bazli katalog</h1>
+              <span className={styles.eyebrow}>Vaka Kataloğu</span>
+              <h1 className={styles.heroTitle}>Çözülecek dosyanı seç</h1>
               <p className={styles.heroLead}>
-                Katalog artik sadece slug listesi degil; kapak gorselleri, kategori
-                niyetleri ve oyun davranisindan beslenen koleksiyonlar uzerinden ilerliyor.
+                Her vaka kendi delilleri, şüphelileri ve gizli bağlantılarıyla gelir.
+                Önce dosyanın atmosferini tanı, sonra oyuna geçip kararını ver.
               </p>
               <div className={styles.metaRow}>
-                <span>{scenarios.length} yayinlanmis vaka</span>
+                <span>{scenarios.length} yayınlanmış vaka</span>
                 <span>{categories.length} kategori</span>
               </div>
               <div className={styles.heroActions}>
                 <Link href="/play" className={styles.primaryButton}>
-                  Oyunu Ac
+                  Oyuna Başla
                 </Link>
                 <Link href="/" className={styles.secondaryButton}>
-                  Anasayfaya Don
+                  Anasayfaya Dön
                 </Link>
               </div>
             </div>
 
             <aside className={styles.catalogSidebar}>
-              <p className={styles.panelLabel}>En Cok Oynananlar</p>
+              <p className={styles.panelLabel}>En Çok Oynananlar</p>
               <div className={styles.featureBulletList}>
                 {popularScenarios.map((scenario) => (
                   <Link
@@ -101,7 +114,7 @@ export default async function CasesIndexPage() {
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionKicker}>Kategoriler</span>
-              <h2>Her tema ayri landing zemini uretir</h2>
+              <h2>Her kategori farklı türde gizem taşır</h2>
             </div>
             <div className={styles.categoryGrid}>
               {categories.map((category) => (
@@ -124,7 +137,7 @@ export default async function CasesIndexPage() {
                     href={`/cases/category/${category.slug}`}
                     className={styles.inlineLink}
                   >
-                    Kategori dosyalarina git
+                    Kategori Dosyaları
                   </Link>
                 </article>
               ))}
@@ -133,8 +146,8 @@ export default async function CasesIndexPage() {
 
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
-              <span className={styles.sectionKicker}>Tum Vakalar</span>
-              <h2>Oyuna bagli tekil case sayfalari</h2>
+              <span className={styles.sectionKicker}>Tüm Vakalar</span>
+              <h2>İncelemeye hazır dosyalar</h2>
             </div>
             <div className={styles.coverCaseGrid}>
               {scenarios.map((scenario) => (
@@ -154,10 +167,10 @@ export default async function CasesIndexPage() {
                     <p>{scenario.teaser || scenario.description}</p>
                     <div className={styles.caseActions}>
                       <Link href={`/cases/${scenario.slug}`} className={styles.inlineLink}>
-                        Dosyayi Incele
+                        Dosyayı İncele
                       </Link>
                       <Link href="/play" className={styles.inlineGhostLink}>
-                        Oyuna Git
+                        Oyuna Başla
                       </Link>
                     </div>
                   </div>

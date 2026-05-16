@@ -1,8 +1,12 @@
-const internalBaseUrl = process.env.DIRECTUS_INTERNAL_URL?.replace(/\/$/, "");
-const publicBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
+import { PUBLIC_CONTENT_BASE_URL } from "./content";
+
+const internalBaseUrl =
+  process.env.CONTENT_INTERNAL_URL?.replace(/\/$/, "") ||
+  process.env.DIRECTUS_INTERNAL_URL?.replace(/\/$/, "");
 const fallbackBaseUrl = "http://127.0.0.1:8057";
 
-export const DIRECTUS_BASE_URL = internalBaseUrl || publicBaseUrl || fallbackBaseUrl;
+export const CONTENT_API_BASE_URL =
+  internalBaseUrl || PUBLIC_CONTENT_BASE_URL || fallbackBaseUrl;
 
 const categoryFieldList = [
   "id",
@@ -51,7 +55,7 @@ function createCollectionUrl(collection, query = {}) {
     searchParams.set(key, String(value));
   });
 
-  return `${DIRECTUS_BASE_URL}/items/${collection}?${searchParams.toString()}`;
+  return `${CONTENT_API_BASE_URL}/items/${collection}?${searchParams.toString()}`;
 }
 
 async function fetchCollection(collection, query, { revalidate = 120 } = {}) {
@@ -148,18 +152,4 @@ export async function getScenarioDetailBySlug(slug) {
     characters,
     media,
   };
-}
-
-export function getDirectusAssetUrl(assetId) {
-  if (!assetId) {
-    return null;
-  }
-
-  return `${DIRECTUS_BASE_URL}/assets/${assetId}`;
-}
-
-export function getScenarioCoverUrl(scenario) {
-  const coverId = scenario?.cover_image?.id || scenario?.cover_image || null;
-
-  return getDirectusAssetUrl(coverId) || `/case-covers/${scenario?.slug}.svg`;
 }

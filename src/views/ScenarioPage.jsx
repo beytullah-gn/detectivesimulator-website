@@ -7,6 +7,7 @@ import ProgressTracker from "../components/ProgressTracker";
 import InterrogationModal from "../components/InterrogationModal";
 import TabNavigation from "../components/TabNavigation";
 import CharacterDetailCard from "../components/CharacterDetailCard";
+import CaseArtwork from "../components/marketing/CaseArtwork";
 import { formatCharacterName, getInitials } from "../utils/formatters";
 
 export default function ScenarioPage({
@@ -181,7 +182,12 @@ export default function ScenarioPage({
                       <ul className="session-list">
                         {activeSessions.map((item) => (
                           <li key={item.id} className="session-item">
-                            <div>
+                            <CaseArtwork
+                              scenario={item?.scenario}
+                              className="session-item-artwork"
+                              eyebrow="session-item-artwork-chip"
+                            />
+                            <div className="session-item-content">
                               <strong>{item?.scenario?.title || "Senaryo"}</strong>
                               {item?.scenario?.category?.title ? (
                                 <p>{item.scenario.category.title}</p>
@@ -203,7 +209,12 @@ export default function ScenarioPage({
                       <ul className="session-list">
                         {completedSessions.map((item) => (
                           <li key={item.id} className="session-item">
-                            <div>
+                            <CaseArtwork
+                              scenario={item?.scenario}
+                              className="session-item-artwork"
+                              eyebrow="session-item-artwork-chip"
+                            />
+                            <div className="session-item-content">
                               <strong>{item?.scenario?.title || "Senaryo"}</strong>
                               {item?.scenario?.category?.title ? (
                                 <p>{item.scenario.category.title}</p>
@@ -211,7 +222,11 @@ export default function ScenarioPage({
                               <p>{item?.scenario?.description || "Açıklama yok"}</p>
                               <p>{formatSessionMeta(item)}</p>
                             </div>
-                            <button type="button" className="ghost" onClick={() => onResumeSession?.(item.id)}>
+                            <button
+                              type="button"
+                              className="ghost"
+                              onClick={() => onResumeSession?.(item.id)}
+                            >
                               Sonucu Gör
                             </button>
                           </li>
@@ -228,15 +243,26 @@ export default function ScenarioPage({
         <section className="panel scenario-detail" style={{ maxWidth: "1400px", margin: "0 auto" }}>
           {sessionActive && <ProgressTracker currentStage={currentStageView} />}
 
-          <div className="panel-header">
-            <div>
-              <h2>{selectedScenario.title}</h2>
-              <p>{selectedScenario.teaser || selectedScenario.description}</p>
-              {formatScenarioHeaderMeta(selectedScenario) ? (
-                <p className="scenario-header-meta">
-                  {formatScenarioHeaderMeta(selectedScenario)}
-                </p>
-              ) : null}
+          <div className="panel-header scenario-detail-header-shell">
+            <div className="scenario-detail-hero">
+              <div className="scenario-detail-copy">
+                <h2>{selectedScenario.title}</h2>
+                <p>{selectedScenario.teaser || selectedScenario.description}</p>
+                {formatScenarioHeaderMeta(selectedScenario) ? (
+                  <p className="scenario-header-meta">
+                    {formatScenarioHeaderMeta(selectedScenario)}
+                  </p>
+                ) : null}
+                <div className="scenario-card-footer">
+                  <span>{Number(selectedScenario?.popularity_score || 0)} oynama</span>
+                  <span>{scenarioMedia.length} kanit parcasi</span>
+                </div>
+              </div>
+              <CaseArtwork
+                scenario={selectedScenario}
+                className="scenario-detail-artwork"
+                eyebrow="scenario-card-artwork-chip"
+              />
             </div>
             <div className="header-actions">
               {currentStageView === 2 && !sessionActive && (

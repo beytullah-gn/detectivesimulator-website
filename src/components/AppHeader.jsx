@@ -12,7 +12,7 @@ export default function AppHeader({
         <span className="brand-mark">DS</span>
         <div>
           <h1>Detective simulator</h1>
-          <p>Directus tabanlı interaktif soruşturma deneyimi</p>
+          <p>Interaktif sorusturma deneyimi</p>
         </div>
       </button>
       <div className="header-actions">

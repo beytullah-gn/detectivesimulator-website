@@ -1,4 +1,4 @@
-import { getScenarioCoverUrl } from "@/lib/directus";
+import { getScenarioCoverUrl } from "@/lib/content";
 
 export default function CaseArtwork({
   scenario,

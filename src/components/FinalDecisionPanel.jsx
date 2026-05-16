@@ -1,5 +1,31 @@
 import { getCharacterName } from "../utils/formatters";
 
+function getFeedbackItems(feedback) {
+  if (!feedback) return [];
+
+  const normalized = String(feedback)
+    .replace(/\*\*/g, "")
+    .split(/\n+/)
+    .flatMap((line) => {
+      const cleanLine = line.replace(/^[-*\d.)\s]+/, "").trim();
+      if (cleanLine.length <= 160) return [cleanLine];
+      return cleanLine.split(/(?<=[.!?])\s+/);
+    })
+    .map((line) => line.trim())
+    .filter((line) => !/^Kaçırdığın/i.test(line))
+    .filter((line) => !/^Doğru Katil/i.test(line))
+    .filter(Boolean);
+
+  if (normalized.length > 1) return normalized.slice(0, 4);
+
+  return String(feedback)
+    .replace(/\*\*/g, "")
+    .split(/(?<=[.!?])\s+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
 export default function FinalDecisionPanel({
   characters,
   selected,
@@ -20,6 +46,7 @@ export default function FinalDecisionPanel({
     : [];
 
   const handleToggle = onToggleGuilty || onToggle;
+  const feedbackItems = getFeedbackItems(result?.feedback);
 
   const renderFeedback = (text) => {
     if (!text) return null;
@@ -86,7 +113,13 @@ export default function FinalDecisionPanel({
       {result ? (
         <div className="result">
           <h4>{result.isCorrect ? "Doğru Tahmin!" : "Yanlış Tahmin"}</h4>
-          <p>{renderFeedback(result.feedback)}</p>
+          {feedbackItems.length ? (
+            <ul className="result-summary">
+              {feedbackItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          ) : null}
           {result.correctGuiltyPlayers?.length ? (
             <div>
               <strong>Doğru Katil(ler):</strong>
@@ -96,6 +129,12 @@ export default function FinalDecisionPanel({
                 ))}
               </ul>
             </div>
+          ) : null}
+          {result.feedback ? (
+            <details className="result-details">
+              <summary>Tüm değerlendirmeyi göster</summary>
+              <div className="result-details-body">{renderFeedback(result.feedback)}</div>
+            </details>
           ) : null}
         </div>
       ) : null}

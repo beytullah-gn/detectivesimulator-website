@@ -3,14 +3,19 @@ import { notFound } from "next/navigation";
 import styles from "../../marketing.module.css";
 import CaseArtwork from "@/components/marketing/CaseArtwork";
 import {
+  createSocialImages,
+  DEFAULT_SOCIAL_IMAGE,
+  getScenarioCoverUrl,
+} from "@/lib/content";
+import {
   getPublishedScenarios,
   getScenarioDetailBySlug,
-} from "@/lib/directus";
+} from "@/lib/content-api";
 
 export const revalidate = 120;
 
 function formatDuration(minutes) {
-  return minutes ? `${minutes} dk` : "Esnek sure";
+  return minutes ? `${minutes} dk` : "Esnek süre";
 }
 
 function formatDifficulty(difficulty) {
@@ -44,12 +49,13 @@ export async function generateMetadata({ params }) {
 
   if (!payload?.scenario) {
     return {
-      title: "Vaka bulunamadi",
+      title: "Vaka bulunamadı",
     };
   }
 
   const { scenario } = payload;
   const description = scenario.teaser || scenario.description;
+  const socialImage = getScenarioCoverUrl(scenario) || DEFAULT_SOCIAL_IMAGE;
 
   return {
     title: scenario.title,
@@ -58,6 +64,10 @@ export async function generateMetadata({ params }) {
       title: scenario.title,
       description,
       type: "article",
+      images: createSocialImages(socialImage, scenario.title),
+    },
+    twitter: {
+      images: createSocialImages(socialImage, scenario.title),
     },
   };
 }
@@ -102,7 +112,7 @@ export default async function CaseDetailPage({ params }) {
 
           <section className={styles.detailHero}>
             <div className={styles.detailHeroCopy}>
-              <span className={styles.eyebrow}>Vaka Dosyasi</span>
+              <span className={styles.eyebrow}>Vaka Dosyası</span>
               <h1 className={styles.heroTitle}>{scenario.title}</h1>
               <p className={styles.heroLead}>
                 {scenario.teaser || scenario.description}
@@ -111,15 +121,15 @@ export default async function CaseDetailPage({ params }) {
                 {category?.title ? <span>{category.title}</span> : null}
                 <span>{formatDifficulty(scenario.difficulty)}</span>
                 <span>{formatDuration(scenario.estimated_duration)}</span>
-                <span>{characters.length} supheli</span>
-                <span>{media.length} kanit parcasi</span>
+                <span>{characters.length} şüpheli</span>
+                <span>{media.length} kanıt parçası</span>
               </div>
               <div className={styles.heroActions}>
                 <Link href="/play" className={styles.primaryButton}>
-                  Bu Vakayi Oyna
+                  Oyuna Başla
                 </Link>
                 <Link href="/cases" className={styles.secondaryButton}>
-                  Tum Vakalara Don
+                  Vaka Kataloğu
                 </Link>
               </div>
             </div>
@@ -130,7 +140,7 @@ export default async function CaseDetailPage({ params }) {
                 className={styles.sidebarArtwork}
                 eyebrow={styles.coverCaseArtworkChip}
               />
-              <p className={styles.panelLabel}>Dosya Ozeti</p>
+              <p className={styles.panelLabel}>Dosya Özeti</p>
               {category?.title ? (
                 <span className={styles.categoryBadge}>{category.title}</span>
               ) : null}
@@ -143,9 +153,9 @@ export default async function CaseDetailPage({ params }) {
               ) : null}
               <div className={styles.panelDivider} />
               <ul className={styles.featureBulletList}>
-                <li>Senaryo slug bazli public route olarak yayinlanir.</li>
-                <li>Karakter ve kanit verisi Directus uzerinden cekilir.</li>
-                <li>Oyuncu ayni vakaya `/play` uzerinden interaktif girer.</li>
+                <li>Dosyayı önce okuyabilir, sonra oyunda sorgulamaya geçebilirsin.</li>
+                <li>Karakterler, kanıtlar ve ipuçları aynı soruşturmayı besler.</li>
+                <li>Finalde suçluyu seçip gerekçeni savunursun.</li>
               </ul>
             </aside>
           </section>
@@ -153,8 +163,8 @@ export default async function CaseDetailPage({ params }) {
           {categoryNarrative.length > 0 ? (
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <span className={styles.sectionKicker}>Kategori Baglami</span>
-                <h2>{scenario.title} nasil bir tema icinde duruyor?</h2>
+                <span className={styles.sectionKicker}>Kategori Bağlamı</span>
+                <h2>{scenario.title} hangi tür gizeme ait?</h2>
               </div>
               <div className={styles.narrativeGrid}>
                 {categoryNarrative.map((paragraph) => (
@@ -168,8 +178,8 @@ export default async function CaseDetailPage({ params }) {
 
           <section className={styles.detailGrid}>
             <article className={styles.detailCard}>
-              <span className={styles.sectionKicker}>Kanitlar</span>
-              <h2>Olay yeri ve baglamsal dokumanlar</h2>
+              <span className={styles.sectionKicker}>Kanıtlar</span>
+              <h2>Olay yeri notları ve dosya belgeleri</h2>
               <div className={styles.evidenceList}>
                 {media.map((item) => (
                   <article key={item.id} className={styles.evidenceCard}>
@@ -187,14 +197,14 @@ export default async function CaseDetailPage({ params }) {
             </article>
 
             <article className={styles.detailCard}>
-              <span className={styles.sectionKicker}>Supheliler</span>
-              <h2>Dosyada adi gecen isimler</h2>
+              <span className={styles.sectionKicker}>Şüpheliler</span>
+              <h2>Dosyada adı geçen isimler</h2>
               <div className={styles.suspectGrid}>
                 {characters.map((character) => (
                   <article key={character.id} className={styles.suspectCard}>
                     <div className={styles.suspectTopline}>
                       <h3>{`${character.name} ${character.surname || ""}`.trim()}</h3>
-                      <span>{character.role || "Supheli"}</span>
+                      <span>{character.role || "Şüpheli"}</span>
                     </div>
                     <p>{character.description}</p>
                     <dl className={styles.suspectFacts}>
@@ -244,13 +254,13 @@ export default async function CaseDetailPage({ params }) {
                       <p>{item.teaser || item.description}</p>
                       <div className={styles.caseActions}>
                         <Link href={`/cases/${item.slug}`} className={styles.inlineLink}>
-                          Dosyayi Incele
+                          Dosyayı İncele
                         </Link>
                         <Link
                           href={`/cases/category/${category.slug}`}
                           className={styles.inlineGhostLink}
                         >
-                          Kategoriye Don
+                          Kategoriye Dön
                         </Link>
                       </div>
                     </div>

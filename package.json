@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "node tests/e2e/detective-flow.cjs",
+    "test:release": "npm run build && npm run test:e2e"
   },
   "dependencies": {
     "next": "16.2.1",
@@ -17,6 +19,7 @@
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
+    "playwright": "^1.59.1",
     "tailwindcss": "^4"
   }
 }
