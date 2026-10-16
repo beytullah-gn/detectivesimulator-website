@@ -939,6 +939,22 @@ button.ghost {
     padding: 1.4rem 1.15rem 3rem;
   }
 
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .user-chip {
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .header-actions .ghost {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
   .panel {
     padding: 1rem;
     border-width: 2px;
