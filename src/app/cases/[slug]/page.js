@@ -125,8 +125,11 @@ export default async function CaseDetailPage({ params }) {
                 <span>{media.length} kanıt parçası</span>
               </div>
               <div className={styles.heroActions}>
-                <Link href="/play" className={styles.primaryButton}>
-                  Oyuna Başla
+                <Link
+                  href={`/play?scenario=${scenario.slug}`}
+                  className={styles.primaryButton}
+                >
+                  Vakayı Başlat
                 </Link>
                 <Link href="/cases" className={styles.secondaryButton}>
                   Vaka Kataloğu

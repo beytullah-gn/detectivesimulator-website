@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   clearToken,
   fetchUser,
@@ -33,38 +33,61 @@ export const VIEW = {
 
 const SESSION_STORAGE_KEY = "detective_simulator_session";
 
+function readSavedSession() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function useDetectiveGame() {
   const [token, setToken] = useState(() => getStoredToken());
   const [user, setUser] = useState(null);
-  const [view, setView] = useState(token ? VIEW.SCENARIOS : VIEW.LANDING);
+  const [view, setView] = useState(() => (getStoredToken() ? VIEW.SCENARIOS : VIEW.LANDING));
   const [authLoading, setAuthLoading] = useState(false);
   const [scenarioLoading, setScenarioLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
   const [scenarios, setScenarios] = useState([]);
-  const [selectedScenario, setSelectedScenario] = useState(null);
-  const [scenarioMedia, setScenarioMedia] = useState([]);
-  const [characters, setCharacters] = useState([]);
-  const [relationsByCharacter, setRelationsByCharacter] = useState({});
-  const [session, setSession] = useState(null);
-  const [activeCharacterId, setActiveCharacterId] = useState("");
+
+  // Lazy restore from session storage to prevent React 19 render-in-effect warnings
+  const savedData = useRef(readSavedSession());
+  const initialSession = savedData.current?.session?.sessionId ? savedData.current : null;
+
+  const [selectedScenario, setSelectedScenario] = useState(() => initialSession?.selectedScenario || null);
+  const [scenarioMedia, setScenarioMedia] = useState(() => initialSession?.scenarioMedia || []);
+  const [characters, setCharacters] = useState(() => initialSession?.characters || []);
+  const [relationsByCharacter, setRelationsByCharacter] = useState(() => initialSession?.relationsByCharacter || {});
+  const [session, setSession] = useState(() => initialSession?.session || null);
+  const [activeCharacterId, setActiveCharacterIdState] = useState(() => initialSession?.activeCharacterId || "");
   const [question, setQuestion] = useState("");
-  const [conversations, setConversations] = useState({});
-  const [hints, setHints] = useState([]);
-  const [finalAnswer, setFinalAnswer] = useState({
-    selected: [],
-    explanation: "",
-  });
-  const [finalResult, setFinalResult] = useState(null);
+  const [draftsByCharacter, setDraftsByCharacter] = useState({});
+  const [conversations, setConversations] = useState(() => initialSession?.conversations || {});
+  const [hints, setHints] = useState(() => initialSession?.hints || []);
+  const [finalAnswer, setFinalAnswer] = useState(
+    () => initialSession?.finalAnswer || { selected: [], explanation: "" }
+  );
+  const [finalResult, setFinalResult] = useState(() => initialSession?.finalResult || null);
   const [sessionHistory, setSessionHistory] = useState([]);
-  const hasRestoredSession = useRef(false);
+  const [pendingScenarioSlug] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("scenario") || params.get("case") || "";
+    } catch {
+      return "";
+    }
+  });
 
   const isLoggedIn = Boolean(token);
   const isSessionActive = Boolean(session?.sessionId);
   const isSessionCompleted = Boolean(finalResult);
 
   const activeCharacter = useMemo(
-    () => characters.find((character) => character.id === activeCharacterId),
+    () => characters.find((character) => character.id === activeCharacterId) || characters[0] || null,
     [characters, activeCharacterId]
   );
 
@@ -77,7 +100,8 @@ export function useDetectiveGame() {
     return (
       message.includes("token expired") ||
       message.includes("unauthorized") ||
-      message.includes("yetkisiz")
+      message.includes("yetkisiz") ||
+      message.includes("jwt expired")
     );
   }
 
@@ -88,6 +112,7 @@ export function useDetectiveGame() {
     setFinalAnswer({ selected: [], explanation: "" });
     setFinalResult(null);
     setQuestion("");
+    setDraftsByCharacter({});
     setRelationsByCharacter({});
   }
 
@@ -97,6 +122,9 @@ export function useDetectiveGame() {
     setUser(null);
     resetSessionState();
     setSelectedScenario(null);
+    setCharacters([]);
+    setScenarioMedia([]);
+    setSessionHistory([]);
     setView(VIEW.LANDING);
 
     try {
@@ -120,37 +148,17 @@ export function useDetectiveGame() {
     );
   }
 
-  async function handleFetchUser() {
-    try {
-      const response = await fetchUser(token);
-      setUser(response);
-    } catch (currentError) {
-      handleApiError(currentError, "User fetch error");
-    }
-  }
+  // Switch active character while preserving drafts
+  function handleSelectCharacter(newId) {
+    if (!newId || newId === activeCharacterId) return;
 
-  async function handleLoadScenarios() {
-    setScenarioLoading(true);
-    setErrorMessage("");
+    setDraftsByCharacter((prev) => ({
+      ...prev,
+      [activeCharacterId]: question,
+    }));
 
-    try {
-      const data = await fetchScenarios(token);
-      setScenarios(Array.isArray(data) ? data : []);
-    } catch (currentError) {
-      handleApiError(currentError, "Scenario fetch error");
-    } finally {
-      setScenarioLoading(false);
-    }
-  }
-
-  async function handleLoadSessionHistory() {
-    try {
-      const data = await fetchMySessions(token);
-      const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
-      setSessionHistory(sessions);
-    } catch (currentError) {
-      handleApiError(currentError, "Session history error");
-    }
+    setQuestion(draftsByCharacter[newId] || "");
+    setActiveCharacterIdState(newId);
   }
 
   async function handleLoadScenarioData(scenarioId) {
@@ -167,7 +175,7 @@ export function useDetectiveGame() {
       const normalizedCharacters = Array.isArray(charactersData) ? charactersData : [];
       setCharacters(normalizedCharacters);
       setScenarioMedia(Array.isArray(mediaData) ? mediaData : []);
-      setActiveCharacterId(normalizedCharacters[0]?.id || "");
+      setActiveCharacterIdState(normalizedCharacters[0]?.id || "");
 
       const normalizedRelations = Array.isArray(relationsData)
         ? relationsData
@@ -186,6 +194,35 @@ export function useDetectiveGame() {
       handleApiError(currentError, "Scenario data fetch error");
     } finally {
       setScenarioLoading(false);
+    }
+  }
+
+  async function handleLoadScenarios() {
+    setScenarioLoading(true);
+    setErrorMessage("");
+
+    try {
+      const data = await fetchScenarios(token);
+      const list = Array.isArray(data) ? data : [];
+      setScenarios(list);
+      return list;
+    } catch (currentError) {
+      handleApiError(currentError, "Scenario fetch error");
+      return [];
+    } finally {
+      setScenarioLoading(false);
+    }
+  }
+
+  async function handleLoadSessionHistory() {
+    try {
+      const data = await fetchMySessions(token);
+      const sessions = Array.isArray(data?.sessions) ? data.sessions : [];
+      setSessionHistory(sessions);
+      return sessions;
+    } catch (currentError) {
+      handleApiError(currentError, "Session history error");
+      return [];
     }
   }
 
@@ -266,9 +303,9 @@ export function useDetectiveGame() {
   }
 
   async function handleAskQuestion(event, overrideCharacterId) {
-    event.preventDefault();
+    if (event?.preventDefault) event.preventDefault();
     const trimmedQuestion = question.trim();
-    const targetCharacterId = overrideCharacterId || activeCharacterId;
+    const targetCharacterId = overrideCharacterId || activeCharacterId || activeCharacter?.id;
 
     if (!trimmedQuestion) {
       setErrorMessage("Lütfen bir soru yazın.");
@@ -290,16 +327,17 @@ export function useDetectiveGame() {
     setActionLoading(true);
     setErrorMessage("");
 
-    const userQuestion = trimmedQuestion;
-    setQuestion("");
-
     try {
       const data = await interrogate({
         sessionId: session.sessionId,
         characterId: targetCharacterId,
-        question: userQuestion,
+        question: trimmedQuestion,
         token,
       });
+
+      // Clear draft on successful response
+      setQuestion("");
+      setDraftsByCharacter((prev) => ({ ...prev, [targetCharacterId]: "" }));
 
       setConversations((previous) => {
         const currentConversation = previous[targetCharacterId] || [];
@@ -307,12 +345,14 @@ export function useDetectiveGame() {
           ...previous,
           [targetCharacterId]: [
             ...currentConversation,
-            { role: "user", content: userQuestion },
+            { role: "user", content: trimmedQuestion },
             { role: "assistant", content: data?.answer || "" },
           ],
         };
       });
     } catch (currentError) {
+      // Keep question in state on error so player does not lose their typed question
+      setQuestion(trimmedQuestion);
       handleApiError(currentError, "Interrogation error");
     } finally {
       setActionLoading(false);
@@ -338,17 +378,17 @@ export function useDetectiveGame() {
   }
 
   async function handleSubmitFinalAnswer(event) {
-    event.preventDefault();
+    if (event?.preventDefault) event.preventDefault();
 
     if (!session?.sessionId) return;
 
     if (finalAnswer.selected.length === 0) {
-      setErrorMessage("En az bir şüpheli seçmelisiniz.");
+      setErrorMessage("En az bir suçlu şüpheli seçmelisiniz.");
       return;
     }
 
     if (!finalAnswer.explanation.trim()) {
-      setErrorMessage("Açıklama metni zorunludur.");
+      setErrorMessage("Gerekçe metni zorunludur.");
       return;
     }
 
@@ -437,7 +477,7 @@ export function useDetectiveGame() {
     setSelectedScenario(null);
     setCharacters([]);
     setScenarioMedia([]);
-    setActiveCharacterId("");
+    setActiveCharacterIdState("");
 
     try {
       localStorage.removeItem(SESSION_STORAGE_KEY);
@@ -451,55 +491,68 @@ export function useDetectiveGame() {
     setView(isLoggedIn ? VIEW.SCENARIOS : VIEW.LANDING);
   }
 
-  const syncUserFromToken = useEffectEvent(() => {
-    handleFetchUser().catch(() => undefined);
-  });
-
-  const loadInitialScenarioData = useEffectEvent(() => {
-    handleLoadScenarios().catch(() => undefined);
-    handleLoadSessionHistory().catch(() => undefined);
-  });
-
+  // Fetch user info when token changes
   useEffect(() => {
-    if (token) {
-      syncUserFromToken();
-    } else {
-      setUser(null);
+    if (!token) {
+      return;
     }
+    let active = true;
+    fetchUser(token)
+      .then((userData) => {
+        if (active) setUser(userData);
+      })
+      .catch((err) => {
+        if (active) handleApiError(err, "User fetch error");
+      });
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  // Load scenarios and session history on login
   useEffect(() => {
-    if (!token || hasRestoredSession.current) return;
+    if (!token) return;
+    let active = true;
 
-    try {
-      const raw = localStorage.getItem(SESSION_STORAGE_KEY);
-      if (!raw) {
-        hasRestoredSession.current = true;
-        return;
+    Promise.resolve().then(() => {
+      if (active) setScenarioLoading(true);
+    });
+
+    Promise.all([
+      fetchScenarios(token).catch((err) => {
+        handleApiError(err, "Scenario fetch error");
+        return [];
+      }),
+      fetchMySessions(token).catch((err) => {
+        handleApiError(err, "Session history error");
+        return { sessions: [] };
+      }),
+    ]).then(([scenarioList, sessionsData]) => {
+      if (!active) return;
+      const normalizedScenarios = Array.isArray(scenarioList) ? scenarioList : [];
+      setScenarios(normalizedScenarios);
+      setSessionHistory(Array.isArray(sessionsData?.sessions) ? sessionsData.sessions : []);
+      setScenarioLoading(false);
+
+      // Auto-select pending scenario if player came from case briefing
+      if (pendingScenarioSlug && !session?.sessionId) {
+        const matched = normalizedScenarios.find(
+          (s) => s.slug === pendingScenarioSlug || s.id === pendingScenarioSlug
+        );
+        if (matched) {
+          handleScenarioSelect(matched);
+        }
       }
+    });
 
-      const saved = JSON.parse(raw);
-      if (saved?.session?.sessionId) {
-        setSession(saved.session || null);
-        setSelectedScenario(saved.selectedScenario || null);
-        setScenarioMedia(saved.scenarioMedia || []);
-        setCharacters(saved.characters || []);
-        setRelationsByCharacter(saved.relationsByCharacter || {});
-        setActiveCharacterId(saved.activeCharacterId || "");
-        setConversations(saved.conversations || {});
-        setHints(saved.hints || []);
-        setFinalAnswer(saved.finalAnswer || { selected: [], explanation: "" });
-        setFinalResult(saved.finalResult || null);
-        setView(VIEW.SCENARIOS);
-      }
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, pendingScenarioSlug]);
 
-      hasRestoredSession.current = true;
-    } catch (storageError) {
-      console.error("Session restore error:", storageError);
-      hasRestoredSession.current = true;
-    }
-  }, [token]);
-
+  // Save session state to localStorage
   useEffect(() => {
     if (!token || !session?.sessionId) return;
 
@@ -534,12 +587,6 @@ export function useDetectiveGame() {
     finalAnswer,
     finalResult,
   ]);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      loadInitialScenarioData();
-    }
-  }, [isLoggedIn]);
 
   return {
     VIEW,
@@ -577,7 +624,7 @@ export function useDetectiveGame() {
     handleResumeSession,
     handleToggleGuilty,
     handleSubmitFinalAnswer,
-    setActiveCharacterId,
+    setActiveCharacterId: handleSelectCharacter,
     setQuestion,
     setFinalAnswer,
   };

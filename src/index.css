@@ -1,13 +1,16 @@
-* {
+/* Clean index styles utilizing design tokens */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 :root {
-  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #f4ead7;
-  background-color: #1a120a;
+  color: var(--ds-text);
+  background-color: var(--ds-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -18,7 +21,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: radial-gradient(circle at top, #3b2f20, #1a120a 55%);
+  min-height: 100dvh;
+  background-color: var(--ds-bg);
+  color: var(--ds-text);
 }
 
 a {
@@ -32,5 +37,5 @@ img {
 }
 
 p {
-  margin: 0.2rem 0 0.8rem;
+  margin: 0 0 0.8rem;
 }

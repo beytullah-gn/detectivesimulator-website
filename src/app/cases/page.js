@@ -169,8 +169,11 @@ export default async function CasesIndexPage() {
                       <Link href={`/cases/${scenario.slug}`} className={styles.inlineLink}>
                         Dosyayı İncele
                       </Link>
-                      <Link href="/play" className={styles.inlineGhostLink}>
-                        Oyuna Başla
+                      <Link
+                        href={`/play?scenario=${scenario.slug}`}
+                        className={styles.inlineGhostLink}
+                      >
+                        Vakayı Başlat
                       </Link>
                     </div>
                   </div>

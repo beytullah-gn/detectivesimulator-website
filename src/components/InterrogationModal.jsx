@@ -1,116 +1,170 @@
-import { useMemo, useState } from "react";
-import { formatCharacterName } from "../utils/formatters";
+"use client";
+
+import { useMemo, useEffect, useRef } from "react";
+import { formatCharacterName, getInitials } from "../utils/formatters";
+import { buildUrl } from "../services/apiClient";
+import { CloseIcon, MessageSquareIcon, SendIcon } from "./icons";
 
 export default function InterrogationModal({
   isOpen,
   onClose,
   character,
-  conversation,
+  conversation = [],
   question,
   onQuestionChange,
   onAsk,
   loading,
   disabled,
 }) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const modalRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   const safeConversation = useMemo(
     () => (Array.isArray(conversation) ? conversation : []),
     [conversation]
   );
 
-  const filteredConversation = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) return safeConversation;
-    return safeConversation.filter((msg) =>
-      String(msg?.content || "").toLowerCase().includes(term)
-    );
-  }, [safeConversation, searchTerm]);
+  useEffect(() => {
+    if (isOpen) {
+      const handleEscape = (e) => {
+        if (e.key === "Escape") onClose();
+      };
+      window.addEventListener("keydown", handleEscape);
+      return () => window.removeEventListener("keydown", handleEscape);
+    }
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    if (isOpen && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [isOpen, safeConversation.length, loading]);
 
   if (!isOpen || !character) return null;
 
-  const questionSuggestions = Array.isArray(character.question_prompts)
-    && character.question_prompts.length > 0
-      ? character.question_prompts
-      : [
-          "Olay sırasında tam olarak neredeydin?",
-          "Olaydan hemen önce ne yaptığını anlatır mısın?",
-          "Diğer şüphelilerle ilişkin nasıl?",
-          "Bu olayla ilgili senden şüphelenmemize sebep olacak bir durum var mı?",
-          "Seninle çelişen bir tanık ifadesi var mı?",
-        ];
+  const characterName = formatCharacterName(character);
 
-  return isOpen ? (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>🔍 {formatCharacterName(character)} ile Sorgulama</h2>
-          <button className="modal-close" onClick={onClose} aria-label="Kapat">
-            ×
+  const questionSuggestions = Array.isArray(character.question_prompts) && character.question_prompts.length > 0
+    ? character.question_prompts.slice(0, 3)
+    : [
+        "Olay sırasında tam olarak neredeydin?",
+        "Olaydan hemen önce ne yaptığını anlatır mısın?",
+        "Diğer şüphelilerle ilişkin nasıl?",
+      ];
+
+  return (
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div
+        className="modal-content"
+        ref={modalRef}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="interrogation-modal-title"
+      >
+        <header className="modal-header">
+          <div className="modal-header-suspect">
+            <div className="modal-avatar-box">
+              {character.avatar ? (
+                <img
+                  src={buildUrl(`/assets/${character.avatar}`)}
+                  alt={characterName}
+                  className="modal-avatar"
+                />
+              ) : (
+                <div className="avatar-neutral-fallback small" aria-hidden="true">
+                  <span>{getInitials(character)}</span>
+                </div>
+              )}
+            </div>
+            <div>
+              <h2 id="interrogation-modal-title" className="modal-title">
+                {characterName}
+              </h2>
+              <p className="modal-subtitle">{character.role || "Şüpheli"}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="modal-close"
+            onClick={onClose}
+            aria-label="Kapat"
+          >
+            <CloseIcon size={18} />
           </button>
-        </div>
+        </header>
+
         <div className="modal-body">
           <div className="interrogation">
-            <div className="conversation-search">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Konuşma içinde ara..."
-                disabled={loading || disabled}
-              />
-            </div>
             <div className="conversation">
               {safeConversation.length === 0 ? (
                 <div className="empty-state">
-                  <p>Henüz soru sormadınız. Aşağıdan bir soru yazın.</p>
-                </div>
-              ) : filteredConversation.length === 0 ? (
-                <div className="empty-state">
-                  <p>Eşleşen mesaj bulunamadı.</p>
+                  <p>Henüz soru sormadınız. Aşağıdaki önerilerden seçebilir veya kendi sorunuzu yazabilirsiniz.</p>
                 </div>
               ) : (
-                filteredConversation.map((msg, idx) => (
+                safeConversation.map((msg, idx) => (
                   <div key={idx} className={`message ${msg.role}`}>
-                    <strong>{msg.role === "user" ? "Siz" : character.name}</strong>
-                    {msg.content}
+                    <span className="message-sender">
+                      {msg.role === "user" ? "Sen" : characterName}
+                    </span>
+                    <div className="message-content">{msg.content}</div>
                   </div>
                 ))
               )}
+              {loading ? (
+                <div className="message assistant loading-message">
+                  <span className="message-sender">{characterName}</span>
+                  <div className="message-content">İfade veriliyor...</div>
+                </div>
+              ) : null}
+              <div ref={messagesEndRef} />
             </div>
 
-            <div className="question-suggestions">
-              <p>Önerilen sorular</p>
-              <div className="suggestion-chips">
-                {questionSuggestions.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    className="suggestion-chip"
-                    onClick={() => onQuestionChange(item)}
-                    disabled={loading || disabled}
-                  >
-                    {item}
-                  </button>
-                ))}
+            {questionSuggestions.length > 0 && !disabled ? (
+              <div className="question-suggestions">
+                <span className="suggestions-label">Önerilen sorular (taslağa ekler)</span>
+                <div className="suggestion-chips">
+                  {questionSuggestions.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      className="suggestion-chip"
+                      onClick={() => onQuestionChange(item)}
+                      disabled={loading || disabled}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
 
-            <form className="question-form" onSubmit={(event) => onAsk(event, character?.id)}>
-              <textarea
-                value={question}
-                onChange={(e) => onQuestionChange(e.target.value)}
-                placeholder="Sorunuzu yazın..."
-                rows={3}
-                disabled={loading || disabled}
-              />
-              <button type="submit" disabled={loading || disabled || !question.trim()}>
-                {loading ? "Cevap bekleniyor..." : "Soruyu Sor"}
-              </button>
+            <form
+              className="question-form"
+              onSubmit={(event) => onAsk(event, character?.id)}
+            >
+              <div className="composer-container">
+                <textarea
+                  value={question}
+                  onChange={(e) => onQuestionChange(e.target.value)}
+                  placeholder="Sorunuzu yazın..."
+                  rows={2}
+                  disabled={loading || disabled}
+                  className="composer-textarea"
+                />
+                <button
+                  type="submit"
+                  disabled={loading || disabled || !question.trim()}
+                  className="ds-btn ds-btn-primary composer-send-btn"
+                >
+                  <SendIcon size={14} />
+                  <span>{loading ? "..." : "Soruyu Sor"}</span>
+                </button>
+              </div>
             </form>
           </div>
         </div>
       </div>
     </div>
-  ) : null;
+  );
 }

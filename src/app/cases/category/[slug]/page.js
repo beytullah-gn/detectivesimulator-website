@@ -163,8 +163,11 @@ export default async function CaseCategoryPage({ params }) {
                     >
                       Dosyayı İncele
                     </Link>
-                    <Link href="/play" className={styles.inlineGhostLink}>
-                      Oyuna Başla
+                    <Link
+                      href={`/play?scenario=${featuredScenario.slug}`}
+                      className={styles.inlineGhostLink}
+                    >
+                      Vakayı Başlat
                     </Link>
                   </div>
                 </>
@@ -214,8 +217,11 @@ export default async function CaseCategoryPage({ params }) {
                       <Link href={`/cases/${scenario.slug}`} className={styles.inlineLink}>
                         Dosyayı İncele
                       </Link>
-                      <Link href="/play" className={styles.inlineGhostLink}>
-                        Oyuna Başla
+                      <Link
+                        href={`/play?scenario=${scenario.slug}`}
+                        className={styles.inlineGhostLink}
+                      >
+                        Vakayı Başlat
                       </Link>
                     </div>
                   </div>

@@ -1,30 +1,29 @@
 export default function ProgressTracker({ currentStage }) {
   const stages = [
-    { id: 1, label: "Senaryo Seç" },
-    { id: 2, label: "Şüpheliler" },
-    { id: 3, label: "Sorgulama" },
-    { id: 4, label: "Karar Ver" },
+    { id: 1, label: "Vaka Seç" },
+    { id: 2, label: "Dosya İnceleme" },
+    { id: 3, label: "Soruşturma" },
+    { id: 4, label: "Final Karar" },
   ];
 
   return (
-    <div className="progress-tracker">
-      {stages.map((stage) => (
-        <div
-          key={stage.id}
-          className={`progress-step ${
-            stage.id === currentStage
-              ? "active"
-              : stage.id < currentStage
-              ? "completed"
-              : ""
-          }`}
-        >
-          <div className="progress-step-circle">
-            {stage.id < currentStage ? "✓" : stage.id}
+    <div className="progress-tracker" role="navigation" aria-label="Soruşturma Adımları">
+      {stages.map((stage) => {
+        const isActive = stage.id === currentStage;
+        const isCompleted = stage.id < currentStage;
+
+        return (
+          <div
+            key={stage.id}
+            className={`progress-step ${isActive ? "active" : ""} ${isCompleted ? "completed" : ""}`}
+          >
+            <span className="progress-step-circle">
+              {isCompleted ? "✓" : stage.id}
+            </span>
+            <span className="progress-step-label">{stage.label}</span>
           </div>
-          <div className="progress-step-label">{stage.label}</div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
