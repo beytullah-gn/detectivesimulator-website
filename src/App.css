@@ -656,3 +656,15 @@
 .auth-privacy-note a {
   color: var(--ds-accent);
 }
+
+.google-signin {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+  width: 100%;
+}
+
+.google-signin.is-disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}

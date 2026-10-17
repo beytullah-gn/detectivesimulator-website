@@ -36,6 +36,7 @@ function App() {
     isLoggedIn,
     isSessionActive,
     handleLoginSubmit,
+    handleSocialLogin,
     handleRegisterSubmit,
     handleLogout,
     handleGoHome,
@@ -88,6 +89,7 @@ function App() {
             footerLabel="Hesabın yok mu? Kayıt Ol"
             selectedCaseTitle={caseTitle}
             onSubmit={handleLoginSubmit}
+            onSocialLogin={handleSocialLogin}
             onFooterClick={() => setView(VIEW.REGISTER)}
             loading={authLoading}
           />
@@ -100,6 +102,7 @@ function App() {
             footerLabel="Zaten hesabın var mı? Giriş Yap"
             selectedCaseTitle={caseTitle}
             onSubmit={handleRegisterSubmit}
+            onSocialLogin={handleSocialLogin}
             onFooterClick={() => setView(VIEW.LOGIN)}
             loading={authLoading}
             showConfirmPassword

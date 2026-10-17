@@ -73,3 +73,14 @@ export function oauthLoginUrl(provider, redirectUrl) {
   return `${API_BASE_URL}/auth/login/${provider}?${params.toString()}`;
 }
 
+
+export async function socialLogin(provider, identityToken) {
+  const data = await apiFetch("/api/social-login", {
+    method: "POST",
+    body: { provider, identityToken },
+  });
+  if (!data?.access_token) {
+    throw new Error("Google ile giriş başarısız oldu.");
+  }
+  return data.access_token;
+}

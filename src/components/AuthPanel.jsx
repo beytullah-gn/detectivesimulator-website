@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AppleIcon, EyeIcon, EyeOffIcon, GoogleIcon } from "./icons";
 import { SOCIAL_PROVIDERS, oauthLoginUrl } from "../services/authService";
+import GoogleSignInButton, { GOOGLE_CLIENT_ID } from "./GoogleSignInButton";
 
 export default function AuthPanel({
   title,
@@ -13,6 +14,7 @@ export default function AuthPanel({
   loading,
   showConfirmPassword,
   selectedCaseTitle,
+  onSocialLogin,
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -64,20 +66,11 @@ export default function AuthPanel({
         {SOCIAL_PROVIDERS.length ? (
           <div className="social-auth-section">
             <div className="social-auth-buttons">
-              {SOCIAL_PROVIDERS.includes("google") ? (
-                <button
-                  type="button"
-                  className="ds-btn social-auth-btn google"
-                  onClick={() => handleSocialLogin("google")}
+              {SOCIAL_PROVIDERS.includes("google") && GOOGLE_CLIENT_ID ? (
+                <GoogleSignInButton
                   disabled={isBusy}
-                >
-                  <GoogleIcon size={18} />
-                  <span>
-                    {socialLoading === "google"
-                      ? "Yönlendiriliyor..."
-                      : "Google ile Devam Et"}
-                  </span>
-                </button>
+                  onCredential={(credential) => onSocialLogin?.("google", credential)}
+                />
               ) : null}
               {SOCIAL_PROVIDERS.includes("apple") ? (
                 <button

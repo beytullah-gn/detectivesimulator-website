@@ -7,6 +7,7 @@ import {
   getStoredToken,
   login,
   register,
+  socialLogin,
   storeToken,
 } from "../services/authService";
 import {
@@ -256,6 +257,21 @@ export function useDetectiveGame() {
       setView(VIEW.SCENARIOS);
     } catch (currentError) {
       handleApiError(currentError, "Login error");
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function handleSocialLogin(provider, identityToken) {
+    setAuthLoading(true);
+    setErrorMessage("");
+    try {
+      const accessToken = await socialLogin(provider, identityToken);
+      storeToken(accessToken);
+      setToken(accessToken);
+      setView(VIEW.SCENARIOS);
+    } catch (currentError) {
+      handleApiError(currentError, "Social login error");
     } finally {
       setAuthLoading(false);
     }
@@ -649,6 +665,7 @@ export function useDetectiveGame() {
     isLoggedIn,
     isSessionActive,
     handleLoginSubmit,
+    handleSocialLogin,
     handleRegisterSubmit,
     handleLogout,
     handleGoHome,
