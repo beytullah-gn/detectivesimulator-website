@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
-import { storeToken } from "../../../services/authService";
+import { SESSION_TOKEN, storeToken } from "../../../services/authService";
 
 function CallbackHandler() {
   const router = useRouter();
@@ -25,6 +25,7 @@ function CallbackHandler() {
     }
 
     if (!error) {
+      storeToken(SESSION_TOKEN);
       router.replace("/play");
     }
   }, [router, token, error]);

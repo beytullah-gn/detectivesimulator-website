@@ -1,5 +1,7 @@
-import { STORAGE_KEY } from "../constants/api";
+import { API_BASE_URL, STORAGE_KEY } from "../constants/api";
 import { apiFetch } from "./apiClient";
+
+export const SESSION_TOKEN = "__directus_session__";
 
 export function getStoredToken() {
   return localStorage.getItem(STORAGE_KEY) || "";
@@ -34,8 +36,18 @@ export async function register({ email, password }) {
 }
 
 export async function fetchUser(token) {
-  const data = await apiFetch("/api/user", { token });
-  return data?.user || null;
+  try {
+    const data = await apiFetch("/api/user", { token });
+    if (data?.user) return data.user;
+  } catch {
+    // Fallback to standard Directus user endpoint
+  }
+  try {
+    const me = await apiFetch("/users/me", { token });
+    return me || null;
+  } catch {
+    return null;
+  }
 }
 
 export function oauthLoginUrl(provider, redirectUrl) {

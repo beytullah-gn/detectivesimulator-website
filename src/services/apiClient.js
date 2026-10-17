@@ -20,7 +20,7 @@ export async function apiFetch(path, { method = "GET", body, token } = {}) {
     "Content-Type": "application/json",
   };
 
-  if (token) {
+  if (token && token !== "__directus_session__") {
     headers.Authorization = `Bearer ${token}`;
   }
 
@@ -31,6 +31,7 @@ export async function apiFetch(path, { method = "GET", body, token } = {}) {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
+      credentials: "include",
     });
 
     payload = await parseResponse(response);

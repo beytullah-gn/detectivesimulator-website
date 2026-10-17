@@ -18,10 +18,30 @@ export default function AuthPanel({
   const [showConfirm, setShowConfirm] = useState(false);
   const [socialLoading, setSocialLoading] = useState("");
 
+  useEffect(() => {
+    function resetSocialLoading() {
+      setSocialLoading("");
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("pageshow", resetSocialLoading);
+      window.addEventListener("focus", resetSocialLoading);
+      return () => {
+        window.removeEventListener("pageshow", resetSocialLoading);
+        window.removeEventListener("focus", resetSocialLoading);
+      };
+    }
+  }, []);
+
   function handleSocialLogin(provider) {
     setSocialLoading(provider);
-    if (typeof window !== "undefined") {
-      window.location.assign(oauthLoginUrl(provider));
+    try {
+      const targetUrl = oauthLoginUrl(provider);
+      if (typeof window !== "undefined") {
+        window.location.assign(targetUrl);
+      }
+    } catch (err) {
+      console.error("Social login navigation error:", err);
+      setSocialLoading("");
     }
   }
 
