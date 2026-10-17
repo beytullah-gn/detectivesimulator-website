@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { EyeIcon, EyeOffIcon } from "./icons";
+import { AppleIcon, EyeIcon, EyeOffIcon, GoogleIcon } from "./icons";
+import { oauthLoginUrl } from "../services/authService";
 
 export default function AuthPanel({
   title,
@@ -15,6 +16,16 @@ export default function AuthPanel({
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [socialLoading, setSocialLoading] = useState("");
+
+  function handleSocialLogin(provider) {
+    setSocialLoading(provider);
+    if (typeof window !== "undefined") {
+      window.location.assign(oauthLoginUrl(provider));
+    }
+  }
+
+  const isBusy = loading || Boolean(socialLoading);
 
   return (
     <section className="auth-shell">
@@ -28,6 +39,33 @@ export default function AuthPanel({
 
         <div className="auth-header">
           <h2>{title}</h2>
+        </div>
+
+        <div className="social-auth-section">
+          <div className="social-auth-buttons">
+            <button
+              type="button"
+              className="ds-btn social-auth-btn google"
+              onClick={() => handleSocialLogin("google")}
+              disabled={isBusy}
+            >
+              <GoogleIcon size={18} />
+              <span>{socialLoading === "google" ? "Yönlendiriliyor..." : "Google ile Devam Et"}</span>
+            </button>
+            <button
+              type="button"
+              className="ds-btn social-auth-btn apple"
+              onClick={() => handleSocialLogin("apple")}
+              disabled={isBusy}
+            >
+              <AppleIcon size={18} />
+              <span>{socialLoading === "apple" ? "Yönlendiriliyor..." : "Apple ile Devam Et"}</span>
+            </button>
+          </div>
+
+          <div className="auth-divider" role="separator">
+            <span>veya e-posta ile</span>
+          </div>
         </div>
 
         <form onSubmit={onSubmit} className="form auth-form">

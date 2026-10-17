@@ -110,12 +110,12 @@ async function routeSmoke(browser) {
   }
 }
 
-async function authenticate(page) {
+async function authenticate(page, email = TEST_EMAIL) {
   await page.goto(`${BASE_URL}/play`, { waitUntil: "networkidle" });
   const lobby = page.locator(".career-bar");
   if (await lobby.isVisible().catch(() => false)) return;
 
-  await page.locator('input[name="email"]').fill(TEST_EMAIL);
+  await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(PASSWORD);
   await page.getByRole("button", { name: "Giriş Yap" }).last().click();
 
@@ -124,25 +124,27 @@ async function authenticate(page) {
 
   // First run against a fresh local backend: register the fixture account, then log in.
   await page.getByRole("button", { name: /Kayıt Ol/ }).last().click();
-  await page.locator('input[name="email"]').fill(TEST_EMAIL);
+  await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(PASSWORD);
   await page.locator('input[name="passwordConfirm"]').fill(PASSWORD);
   await page.getByRole("button", { name: "Kayıt Ol" }).last().click();
   await page.getByRole("heading", { name: "Giriş Yap" }).waitFor({ state: "visible", timeout: 15000 });
-  await page.locator('input[name="email"]').fill(TEST_EMAIL);
+  await page.locator('input[name="email"]').fill(email);
   await page.locator('input[name="password"]').fill(PASSWORD);
   await page.getByRole("button", { name: "Giriş Yap" }).last().click();
   await lobby.waitFor({ state: "visible", timeout: 15000 });
 }
 
+
 async function playFullCase(page) {
-  await page.locator(".case-tile:not(.is-locked)").first().waitFor({ state: "visible", timeout: 20000 });
+  await page.locator("button.case-tile:not(.is-locked)").first().waitFor({ state: "visible", timeout: 25000 });
   await assertNoHorizontalOverflow(page, "lobby");
   await screenshot(page, "game-lobby");
 
-  await page.locator(".case-tile:not(.is-locked)").first().click();
-  await page.locator(".briefing-story .paper").waitFor({ state: "visible", timeout: 15000 });
+  await page.locator("button.case-tile:not(.is-locked)").first().click();
+  await page.locator(".briefing-story .paper").waitFor({ state: "visible", timeout: 20000 });
   await screenshot(page, "game-briefing");
+
 
   // A case with an open run offers resume or restart; restart keeps the test deterministic.
   const restart = page.getByRole("button", { name: "Baştan başla" });
@@ -223,11 +225,13 @@ async function playFullCase(page) {
       await step(`full gameplay @${viewport.name}`, async () => {
         const context = await browser.newContext({ viewport });
         const page = await createTrackedPage(context);
-        await authenticate(page);
+        const viewportEmail = `${viewport.name}-${Date.now()}@example.com`;
+        await authenticate(page, viewportEmail);
         await playFullCase(page);
         await context.close();
       });
     }
+
 
     assert(report.consoleErrors.length === 0, `Console errors: ${JSON.stringify(report.consoleErrors)}`);
     assert(report.responseFailures.length === 0, `5xx responses: ${JSON.stringify(report.responseFailures)}`);

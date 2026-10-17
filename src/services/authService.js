@@ -37,3 +37,14 @@ export async function fetchUser(token) {
   const data = await apiFetch("/api/user", { token });
   return data?.user || null;
 }
+
+export function oauthLoginUrl(provider, redirectUrl) {
+  const redirect =
+    redirectUrl ||
+    (typeof window !== "undefined"
+      ? `${window.location.origin}/auth/callback`
+      : "https://detectivesimulator.com/auth/callback");
+  const params = new URLSearchParams({ redirect });
+  return `${API_BASE_URL}/auth/login/${provider}?${params.toString()}`;
+}
+
