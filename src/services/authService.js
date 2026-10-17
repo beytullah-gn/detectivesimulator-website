@@ -3,6 +3,13 @@ import { apiFetch } from "./apiClient";
 
 export const SESSION_TOKEN = "__directus_session__";
 
+// Social sign-in buttons appear only for providers listed here (e.g. "google,apple"),
+// so a provider is not shown before its Google/Apple console redirect URLs are set up.
+export const SOCIAL_PROVIDERS = (process.env.NEXT_PUBLIC_SOCIAL_LOGIN || "")
+  .split(",")
+  .map((item) => item.trim())
+  .filter(Boolean);
+
 export function getStoredToken() {
   return localStorage.getItem(STORAGE_KEY) || "";
 }
@@ -12,6 +19,12 @@ export function storeToken(token) {
 }
 
 export function clearToken() {
+  // Social sign-in keeps the session in an HTTP-only cookie; end it on the server too.
+  if (localStorage.getItem(STORAGE_KEY) === SESSION_TOKEN) {
+    apiFetch("/auth/logout", { method: "POST", body: { mode: "session" } }).catch((error) =>
+      console.error("Session logout error:", error)
+    );
+  }
   localStorage.removeItem(STORAGE_KEY);
 }
 

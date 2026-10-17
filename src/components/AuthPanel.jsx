@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppleIcon, EyeIcon, EyeOffIcon, GoogleIcon } from "./icons";
-import { oauthLoginUrl } from "../services/authService";
+import { SOCIAL_PROVIDERS, oauthLoginUrl } from "../services/authService";
 
 export default function AuthPanel({
   title,
@@ -61,32 +61,46 @@ export default function AuthPanel({
           <h2>{title}</h2>
         </div>
 
-        <div className="social-auth-section">
-          <div className="social-auth-buttons">
-            <button
-              type="button"
-              className="ds-btn social-auth-btn google"
-              onClick={() => handleSocialLogin("google")}
-              disabled={isBusy}
-            >
-              <GoogleIcon size={18} />
-              <span>{socialLoading === "google" ? "Yönlendiriliyor..." : "Google ile Devam Et"}</span>
-            </button>
-            <button
-              type="button"
-              className="ds-btn social-auth-btn apple"
-              onClick={() => handleSocialLogin("apple")}
-              disabled={isBusy}
-            >
-              <AppleIcon size={18} />
-              <span>{socialLoading === "apple" ? "Yönlendiriliyor..." : "Apple ile Devam Et"}</span>
-            </button>
-          </div>
+        {SOCIAL_PROVIDERS.length ? (
+          <div className="social-auth-section">
+            <div className="social-auth-buttons">
+              {SOCIAL_PROVIDERS.includes("google") ? (
+                <button
+                  type="button"
+                  className="ds-btn social-auth-btn google"
+                  onClick={() => handleSocialLogin("google")}
+                  disabled={isBusy}
+                >
+                  <GoogleIcon size={18} />
+                  <span>
+                    {socialLoading === "google"
+                      ? "Yönlendiriliyor..."
+                      : "Google ile Devam Et"}
+                  </span>
+                </button>
+              ) : null}
+              {SOCIAL_PROVIDERS.includes("apple") ? (
+                <button
+                  type="button"
+                  className="ds-btn social-auth-btn apple"
+                  onClick={() => handleSocialLogin("apple")}
+                  disabled={isBusy}
+                >
+                  <AppleIcon size={18} />
+                  <span>
+                    {socialLoading === "apple"
+                      ? "Yönlendiriliyor..."
+                      : "Apple ile Devam Et"}
+                  </span>
+                </button>
+              ) : null}
+            </div>
 
-          <div className="auth-divider" role="separator">
-            <span>veya e-posta ile</span>
+            <div className="auth-divider" role="separator">
+              <span>veya e-posta ile</span>
+            </div>
           </div>
-        </div>
+        ) : null}
 
         <form onSubmit={onSubmit} className="form auth-form">
           <label className="form-field">
@@ -109,7 +123,9 @@ export default function AuthPanel({
                 type={showPassword ? "text" : "password"}
                 name="password"
                 required
-                autoComplete={showConfirmPassword ? "new-password" : "current-password"}
+                autoComplete={
+                  showConfirmPassword ? "new-password" : "current-password"
+                }
                 placeholder="••••••••"
                 className="field-input password-input"
                 disabled={loading}
@@ -121,7 +137,11 @@ export default function AuthPanel({
                 aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
                 tabIndex={-1}
               >
-                {showPassword ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                {showPassword ? (
+                  <EyeOffIcon size={16} />
+                ) : (
+                  <EyeIcon size={16} />
+                )}
               </button>
             </div>
           </label>
@@ -146,7 +166,11 @@ export default function AuthPanel({
                   aria-label={showConfirm ? "Şifreyi gizle" : "Şifreyi göster"}
                   tabIndex={-1}
                 >
-                  {showConfirm ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
+                  {showConfirm ? (
+                    <EyeOffIcon size={16} />
+                  ) : (
+                    <EyeIcon size={16} />
+                  )}
                 </button>
               </div>
             </label>
