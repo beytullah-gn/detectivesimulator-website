@@ -96,7 +96,10 @@ export default function AuthPanel({
               ) : null}
             </div>
 
-            <div className="auth-divider" role="separator">
+            <p className="auth-privacy-note">
+            Devam ederek <a href="/gizlilik">gizlilik politikasını</a> kabul edersin.
+          </p>
+          <div className="auth-divider" role="separator">
               <span>veya e-posta ile</span>
             </div>
           </div>
