@@ -5,7 +5,6 @@ import "./App.css";
 import AppHeader from "./components/AppHeader";
 import AlertMessage from "./components/AlertMessage";
 import AuthPanel from "./components/AuthPanel";
-import LandingHero from "./components/LandingHero";
 import ScenarioPage from "./views/ScenarioPage";
 import { VIEW, useDetectiveGame } from "./hooks/useDetectiveGame";
 
@@ -19,24 +18,25 @@ function App() {
     actionLoading,
     error,
     scenarios,
+    lockedScenarioIds,
     selectedScenario,
     scenarioMedia,
     characters,
     relationsByCharacter,
-    activeCharacter,
     conversations,
+    session,
     question,
     hints,
     finalAnswer,
     finalResult,
     sessionHistory,
+    pendingScenarioTitle,
     isLoggedIn,
     isSessionActive,
     handleLoginSubmit,
     handleRegisterSubmit,
     handleLogout,
     handleGoHome,
-    handleLoadScenarios,
     handleScenarioSelect,
     handleStartSession,
     handleAskQuestion,
@@ -45,10 +45,11 @@ function App() {
     handleResumeSession,
     handleToggleGuilty,
     handleSubmitFinalAnswer,
-    setActiveCharacterId,
     setQuestion,
     setFinalAnswer,
   } = useDetectiveGame();
+
+  const caseTitle = selectedScenario?.title || pendingScenarioTitle;
 
   return (
     <div className="app">
@@ -64,29 +65,24 @@ function App() {
       <main className="app-main">
         <AlertMessage message={error} />
 
-        {view === VIEW.LANDING && !isLoggedIn ? (
-          <LandingHero
-            onLogin={() => setView(VIEW.LOGIN)}
-            onRegister={() => setView(VIEW.REGISTER)}
-          />
-        ) : null}
-
-        {view === VIEW.LOGIN && !isLoggedIn ? (
+        {(!isLoggedIn && (view === VIEW.LOGIN || view === VIEW.LANDING)) ? (
           <AuthPanel
             title="Giriş Yap"
             submitLabel="Giriş Yap"
             footerLabel="Hesabın yok mu? Kayıt Ol"
+            selectedCaseTitle={caseTitle}
             onSubmit={handleLoginSubmit}
             onFooterClick={() => setView(VIEW.REGISTER)}
             loading={authLoading}
           />
         ) : null}
 
-        {view === VIEW.REGISTER && !isLoggedIn ? (
+        {!isLoggedIn && view === VIEW.REGISTER ? (
           <AuthPanel
             title="Kayıt Ol"
             submitLabel="Kayıt Ol"
             footerLabel="Zaten hesabın var mı? Giriş Yap"
+            selectedCaseTitle={caseTitle}
             onSubmit={handleRegisterSubmit}
             onFooterClick={() => setView(VIEW.LOGIN)}
             loading={authLoading}
@@ -97,20 +93,18 @@ function App() {
         {isLoggedIn && view === VIEW.SCENARIOS ? (
           <ScenarioPage
             scenarios={scenarios}
+            lockedScenarioIds={lockedScenarioIds}
             selectedScenario={selectedScenario}
             scenarioMedia={scenarioMedia}
             characters={characters}
             relationsByCharacter={relationsByCharacter}
-            userKey={user?.id || user?.email || ""}
+            sessionId={session?.sessionId || ""}
             onScenarioSelect={handleScenarioSelect}
-            onRefreshScenarios={handleLoadScenarios}
             sessionHistory={sessionHistory}
             onResumeSession={handleResumeSession}
             onStartSession={handleStartSession}
             sessionActive={isSessionActive}
-            onSelectCharacter={setActiveCharacterId}
-            activeCharacter={activeCharacter}
-            conversation={conversations[activeCharacter?.id] || []}
+            conversations={conversations}
             question={question}
             onQuestionChange={setQuestion}
             onAskQuestion={handleAskQuestion}

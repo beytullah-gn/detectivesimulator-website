@@ -4,23 +4,28 @@ const publicBaseUrl =
   "http://127.0.0.1:8057";
 
 export const PUBLIC_CONTENT_BASE_URL = publicBaseUrl;
-export const DEFAULT_SOCIAL_IMAGE = "/case-covers/galata-patent-dosyasi.svg";
+// Real case photos live in public/case-photos/<slug>.jpg; list a slug here once its photo is added.
+const CASE_PHOTO_SLUGS = new Set([]);
 
-export function getContentAssetUrl(assetId) {
-  if (!assetId) {
-    return null;
-  }
+export const DEFAULT_SOCIAL_IMAGE = null;
 
-  return `${PUBLIC_CONTENT_BASE_URL}/assets/${assetId}`;
+export function getCasePhotoUrl(scenario) {
+  return scenario?.slug && CASE_PHOTO_SLUGS.has(scenario.slug)
+    ? `/case-photos/${scenario.slug}.jpg`
+    : null;
 }
 
 export function getScenarioCoverUrl(scenario) {
-  const coverId = scenario?.cover_image?.id || scenario?.cover_image || null;
-  const localCover = scenario?.slug
-    ? `/case-covers/${scenario.slug}.svg`
-    : null;
+  return getCasePhotoUrl(scenario);
+}
 
-  return localCover || getContentAssetUrl(coverId) || DEFAULT_SOCIAL_IMAGE;
+export function getCaseNumber(scenario) {
+  const source = scenario?.slug || scenario?.id || "";
+  let hash = 0;
+  for (const char of source) {
+    hash = (hash * 31 + char.charCodeAt(0)) % 9000;
+  }
+  return `No. ${String(1000 + hash)}`;
 }
 
 export function createSocialImages(url, alt) {

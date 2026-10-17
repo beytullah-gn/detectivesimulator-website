@@ -27,8 +27,7 @@ const themeInitScript = `
   (function() {
     try {
       var saved = localStorage.getItem('ds_theme');
-      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (saved === 'dark' || (!saved && prefersDark)) {
+      if (saved !== 'light') {
         document.documentElement.classList.add('dark');
         document.documentElement.setAttribute('data-theme', 'dark');
       } else {

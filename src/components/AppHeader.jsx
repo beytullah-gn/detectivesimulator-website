@@ -19,7 +19,6 @@ export default function AppHeader({
           <span className="brand-mark">DS</span>
           <div className="brand-copy">
             <span className="brand-title">Detective Simulator</span>
-            <span className="brand-subtitle">Soruşturma Dosyası</span>
           </div>
         </button>
       </div>
@@ -29,7 +28,7 @@ export default function AppHeader({
           Vakalar
         </Link>
         <Link href="/play" className="header-link active">
-          Oyun Alanı
+          Oyna
         </Link>
       </nav>
 

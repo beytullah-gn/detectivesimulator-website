@@ -28,11 +28,6 @@ export default function AuthPanel({
 
         <div className="auth-header">
           <h2>{title}</h2>
-          <p className="auth-subtitle">
-            {showConfirmPassword
-              ? "Soruşturmaya başlamak için yeni bir dedektif hesabı aç."
-              : "Dosyalarına ve soruşturma geçmişine erişmek için giriş yap."}
-          </p>
         </div>
 
         <form onSubmit={onSubmit} className="form auth-form">

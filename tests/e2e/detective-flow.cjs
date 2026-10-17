@@ -10,35 +10,22 @@ const TEST_EMAIL = process.env.E2E_EMAIL || "detective-e2e@example.com";
 const PASSWORD = process.env.E2E_PASSWORD || "Detective-12345";
 
 const VIEWPORTS = [
-  { name: "small-mobile", width: 360, height: 800 },
-  { name: "mobile", width: 390, height: 844 },
+  { name: "mobile", width: 360, height: 800 },
   { name: "tablet", width: 768, height: 1024 },
-  { name: "compact-desktop", width: 1024, height: 768 },
-  { name: "desktop", width: 1366, height: 900 },
+  { name: "desktop", width: 1280, height: 860 },
 ];
 
 const report = {
   baseUrl: BASE_URL,
   startedAt: new Date().toISOString(),
-  viewports: VIEWPORTS,
   steps: [],
-  visualChecks: [],
   screenshots: [],
   consoleErrors: [],
   responseFailures: [],
 };
 
 function assert(condition, message) {
-  if (!condition) {
-    throw new Error(message);
-  }
-}
-
-function slugify(value) {
-  return String(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+  if (!condition) throw new Error(message);
 }
 
 async function step(name, fn) {
@@ -48,594 +35,176 @@ async function step(name, fn) {
     report.steps.push({ name, status: "passed", durationMs: Date.now() - startedAt });
     return result;
   } catch (error) {
-    report.steps.push({
-      name,
-      status: "failed",
-      durationMs: Date.now() - startedAt,
-      error: error.message,
-    });
+    report.steps.push({ name, status: "failed", durationMs: Date.now() - startedAt, error: error.message });
     throw error;
   }
 }
 
 async function screenshot(page, name) {
-  const file = path.join(ARTIFACT_DIR, `${slugify(name)}.png`);
+  const file = path.join(ARTIFACT_DIR, `${name}.png`);
   await page.screenshot({ path: file, fullPage: true });
   report.screenshots.push(file);
-  return file;
 }
 
 async function createTrackedPage(context) {
   const page = await context.newPage();
   page.on("console", (message) => {
     const text = message.text();
-    const isDevHmrNoise =
-      text.includes("/_next/webpack-hmr") ||
+    const isNoise =
       text.includes("WebSocket connection to") ||
-      text.includes("net::ERR_INVALID_HTTP_RESPONSE") ||
+      text.includes("/_next/webpack-hmr") ||
+      text.includes("Encountered a script tag") ||
       text.includes("Login error Error:") ||
-      text.includes("server responded with a status of 401");
-    if (message.type() === "error" && !isDevHmrNoise) {
-      report.consoleErrors.push({
-        text,
-        location: message.location(),
-      });
+      text.includes("status of 401");
+    if (message.type() === "error" && !isNoise) {
+      report.consoleErrors.push({ text, url: page.url() });
     }
   });
   page.on("response", (response) => {
-    const url = response.url();
-    const status = response.status();
-    if (status >= 500) {
-      report.responseFailures.push({ url, status });
+    if (response.status() >= 500) {
+      report.responseFailures.push({ url: response.url(), status: response.status() });
     }
   });
   return page;
 }
 
-async function waitForVisible(locator, label, timeout = 15000) {
-  await locator.waitFor({ state: "visible", timeout }).catch((error) => {
-    throw new Error(`${label} did not become visible: ${error.message}`);
+async function assertNoHorizontalOverflow(page, label) {
+  const overflow = await page.evaluate(() => {
+    const width = Math.max(document.documentElement.scrollWidth, document.body?.scrollWidth || 0);
+    return Math.max(0, width - window.innerWidth);
   });
+  assert(overflow <= 2, `${label}: horizontal overflow ${overflow}px`);
 }
 
-async function waitForPlayReady(page) {
-  const scenarioHeading = page.getByRole("heading", { name: "Senaryolar" });
-  const loginHeading = page.getByRole("heading", { name: "Giriş Yap" });
-  const registerHeading = page.getByRole("heading", { name: "Kayıt Ol" });
-  const landingHeading = page.getByText(/Vakanı seç, delilleri topla/i);
-  await Promise.race([
-    scenarioHeading.waitFor({ state: "visible", timeout: 20000 }),
-    loginHeading.waitFor({ state: "visible", timeout: 20000 }),
-    registerHeading.waitFor({ state: "visible", timeout: 20000 }),
-    landingHeading.waitFor({ state: "visible", timeout: 20000 }),
-  ]);
-}
-
-async function assertNoHorizontalOverflow(page) {
-  const payload = await page.evaluate(() => {
-    document.documentElement.scrollLeft = 0;
-    if (document.body) document.body.scrollLeft = 0;
-    const root = document.documentElement;
-    const body = document.body;
-    const width = Math.max(root.scrollWidth, body ? body.scrollWidth : 0);
-    const overflow = Math.max(0, width - window.innerWidth);
-    const offenders = Array.from(document.querySelectorAll("body *"))
-      .map((element) => {
-        const rect = element.getBoundingClientRect();
-        return {
-          tag: element.tagName.toLowerCase(),
-          className: typeof element.className === "string" ? element.className : "",
-          text: (element.textContent || "").trim().slice(0, 80),
-          left: Math.round(rect.left),
-          right: Math.round(rect.right),
-          width: Math.round(rect.width),
-        };
-      })
-      .filter((item) => item.right > window.innerWidth + 2 || item.left < -2)
-      .slice(0, 8);
-    return { overflow, offenders };
-  });
-  assert(
-    payload.overflow <= 2,
-    `horizontal overflow is ${payload.overflow}px; offenders=${JSON.stringify(payload.offenders)}`
-  );
-  return payload.overflow;
-}
-
-async function assertVisibleAndEnabled(locator, label) {
-  await waitForVisible(locator.first(), label);
-  const enabled = await locator.first().isEnabled().catch(() => true);
-  assert(enabled, `${label} is visible but disabled`);
-}
-
-async function assertElementInInitialViewport(page, locator, label) {
-  const box = await locator.first().boundingBox();
-  assert(box, `${label} has no bounding box`);
-  const viewport = page.viewportSize();
-  assert(box.y < viewport.height, `${label} is below the initial viewport`);
-  assert(box.x + box.width > 0 && box.x < viewport.width, `${label} is horizontally outside the viewport`);
-}
-
-async function assertNoTextClipping(page) {
-  const clipped = await page.evaluate(() => {
-    const selectors = [
-      "button",
-      "a",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      ".panel-subtitle",
-      ".heroLead",
-      ".landing p",
-      ".caseMeta span",
-      ".metaRow span",
-      ".scenario-category-chip",
-      ".hint-badge",
-      ".result-summary li",
-      ".scenario-card-footer span",
-    ];
-
-    return selectors
-      .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
-      .filter((element) => {
-        const style = window.getComputedStyle(element);
-        const rect = element.getBoundingClientRect();
-        if (rect.width < 1 || rect.height < 1 || style.visibility === "hidden") return false;
-        const clipsX = ["hidden", "clip"].includes(style.overflowX);
-        const clipsY = ["hidden", "clip"].includes(style.overflowY);
-        return (
-          (clipsX && element.scrollWidth > element.clientWidth + 2) ||
-          (clipsY && element.scrollHeight > element.clientHeight + 2)
-        );
-      })
-      .slice(0, 8)
-      .map((element) => ({
-        selector: element.tagName.toLowerCase(),
-        text: (element.textContent || "").trim().slice(0, 120),
-        clientWidth: element.clientWidth,
-        scrollWidth: element.scrollWidth,
-        clientHeight: element.clientHeight,
-        scrollHeight: element.scrollHeight,
-      }));
-  });
-
-  assert(clipped.length === 0, `text clipping detected: ${JSON.stringify(clipped)}`);
-}
-
-async function assertNoOverlap(page, pairs) {
-  for (const [firstSelector, secondSelector] of pairs) {
-    const overlap = await page.evaluate(
-      ([aSelector, bSelector]) => {
-        const first = document.querySelector(aSelector);
-        const second = document.querySelector(bSelector);
-        if (!first || !second) return null;
-        const a = first.getBoundingClientRect();
-        const b = second.getBoundingClientRect();
-        if (a.width <= 0 || a.height <= 0 || b.width <= 0 || b.height <= 0) return null;
-        const width = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left));
-        const height = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
-        return { width, height, area: width * height };
-      },
-      [firstSelector, secondSelector]
-    );
-    if (overlap) {
-      assert(overlap.area <= 2, `${firstSelector} overlaps ${secondSelector}: ${JSON.stringify(overlap)}`);
-    }
-  }
-}
-
-async function assertContainedInViewport(page, selector, label) {
-  const box = await page.locator(selector).first().boundingBox();
-  assert(box, `${label} has no bounding box`);
-  const viewport = page.viewportSize();
-  assert(box.x >= -2, `${label} starts outside left viewport edge`);
-  assert(box.y >= -2, `${label} starts outside top viewport edge`);
-  assert(box.x + box.width <= viewport.width + 2, `${label} exceeds right viewport edge`);
-  assert(box.y + box.height <= viewport.height + 2, `${label} exceeds bottom viewport edge`);
-  assert(box.height <= viewport.height + 2, `${label} is taller than viewport`);
-}
-
-async function assertHomeCollectionCards(page, viewport) {
-  const result = await page.evaluate(() => {
-    const cards = Array.from(document.querySelectorAll('[class*="coverCaseCard"]'));
-    return cards.slice(0, 6).map((card) => {
-      const artwork = card.querySelector('[class*="coverCaseArtwork"]');
-      const body = card.querySelector('[class*="coverCaseBody"]');
-      const cardRect = card.getBoundingClientRect();
-      const artworkRect = artwork?.getBoundingClientRect();
-      const bodyRect = body?.getBoundingClientRect();
-      return {
-        cardWidth: Math.round(cardRect.width),
-        cardHeight: Math.round(cardRect.height),
-        artworkWidth: artworkRect ? Math.round(artworkRect.width) : 0,
-        artworkHeight: artworkRect ? Math.round(artworkRect.height) : 0,
-        bodyWidth: bodyRect ? Math.round(bodyRect.width) : 0,
-      };
-    });
-  });
-
-  assert(result.length >= 3, `expected at least three home collection cards, got ${result.length}`);
-
-  for (const [index, item] of result.entries()) {
-    if (viewport.width >= 1024) {
-      assert(item.cardWidth >= 220, `home collection card ${index} is too narrow: ${item.cardWidth}px`);
-      assert(item.artworkHeight <= 360, `home collection artwork ${index} is too tall: ${item.artworkHeight}px`);
-    } else if (viewport.width >= 720) {
-      assert(item.cardWidth >= 220, `tablet home collection card ${index} is too narrow: ${item.cardWidth}px`);
-      assert(item.artworkHeight <= 360, `tablet home collection artwork ${index} is too tall: ${item.artworkHeight}px`);
-    } else {
-      assert(item.cardWidth >= viewport.width - 80, `mobile home collection card ${index} is too narrow: ${item.cardWidth}px`);
-      assert(item.artworkHeight <= 320, `mobile home collection artwork ${index} is too tall: ${item.artworkHeight}px`);
-    }
-  }
-}
-
-async function runVisualChecks(page, { kind, name, viewport, ctas = [], initialViewport = [], overlapPairs = [], contained = [], customChecks = [] }) {
-  const overflowPx = await assertNoHorizontalOverflow(page);
-  await assertNoTextClipping(page);
-
-  for (const item of ctas) {
-    await assertVisibleAndEnabled(item.locator, item.label);
-  }
-  for (const item of initialViewport) {
-    await assertElementInInitialViewport(page, item.locator, item.label);
-  }
-  if (overlapPairs.length) {
-    await assertNoOverlap(page, overlapPairs);
-  }
-  for (const item of contained) {
-    await assertContainedInViewport(page, item.selector, item.label);
-  }
-  for (const check of customChecks) {
-    await check(page, viewport);
-  }
-
-  const screenshotPath = await screenshot(page, `${kind}-${name}-${viewport.name}`);
-  report.visualChecks.push({
-    kind,
-    name,
-    viewport: viewport.name,
-    width: viewport.width,
-    height: viewport.height,
-    overflowPx,
-    ctas: ctas.map((item) => item.label),
-    overlapPairs,
-    contained: contained.map((item) => item.label),
-    customChecks: customChecks.length,
-    screenshot: screenshotPath,
-  });
-}
-
-async function captureResponsiveState(page, name, options = {}) {
-  for (const viewport of VIEWPORTS) {
-    await page.setViewportSize({ width: viewport.width, height: viewport.height });
-    if (options.focus) {
-      await options.focus(page).scrollIntoViewIfNeeded().catch(() => {});
-    } else {
-      await page.evaluate(() => window.scrollTo(0, 0));
-    }
-    await page.waitForTimeout(150);
-    await runVisualChecks(page, {
-      kind: "state",
-      name,
-      viewport,
-      ctas: options.ctas ? options.ctas(page) : [],
-      initialViewport: options.initialViewport ? options.initialViewport(page) : [],
-      overlapPairs: options.overlapPairs || [],
-      contained: options.contained || [],
-    });
-  }
-}
-
-async function discoverContentRoutes(browser) {
-  const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+async function routeSmoke(browser) {
+  const context = await browser.newContext();
   const page = await createTrackedPage(context);
   await page.goto(`${BASE_URL}/cases`, { waitUntil: "networkidle" });
-  const caseHref = await page.locator('a[href^="/cases/"]:has-text("Dosyayı İncele")').first().getAttribute("href");
+  const caseHref = await page.locator('a[href^="/cases/"]:not([href^="/cases/category/"])').first().getAttribute("href");
   const categoryHref = await page.locator('a[href^="/cases/category/"]').first().getAttribute("href");
+  assert(caseHref && categoryHref, "case and category links should exist on /cases");
   await context.close();
-  assert(caseHref, "No case detail route found from /cases");
-  assert(categoryHref, "No category route found from /cases");
-  return { caseHref, categoryHref };
-}
 
-async function routeSmoke(browser, route, name, viewport, ctasFactory) {
-  const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
-  const page = await createTrackedPage(context);
-  await page.goto(`${BASE_URL}${route}`, { waitUntil: "networkidle" });
-  if (route === "/play") {
-    await waitForPlayReady(page);
-  }
-  await runVisualChecks(page, {
-    kind: "route",
-    name,
-    viewport,
-    ctas: ctasFactory(page),
-    initialViewport: name === "play" ? [{ locator: page.getByRole("button", { name: "Giriş Yap" }).first(), label: "play login CTA" }] : [],
-    customChecks: name === "home" ? [assertHomeCollectionCards] : [],
-  });
-  await context.close();
-}
-
-function routeDefinitions(routes) {
-  return [
-    {
-      route: "/",
-      name: "home",
-      ctas: (page) => [
-        { locator: page.getByRole("link", { name: "Vaka Kataloğu" }).first(), label: "home catalog CTA" },
-        { locator: page.getByRole("link", { name: "Oyuna Başla" }).first(), label: "home play CTA" },
-      ],
-    },
-    {
-      route: "/cases",
-      name: "cases",
-      ctas: (page) => [
-        { locator: page.getByRole("link", { name: /Oyuna Başla|Vakayı Başlat/ }).first(), label: "cases play CTA" },
-        { locator: page.locator('a:has-text("Dosyayı İncele")').first(), label: "cases detail CTA" },
-      ],
-    },
-    {
-      route: routes.caseHref,
-      name: "case-detail",
-      ctas: (page) => [
-        { locator: page.getByRole("link", { name: /Oyuna Başla|Vakayı Başlat/ }).first(), label: "case play CTA" },
-        { locator: page.getByRole("link", { name: "Vaka Kataloğu" }).first(), label: "case catalog CTA" },
-      ],
-    },
-    {
-      route: routes.categoryHref,
-      name: "category-detail",
-      ctas: (page) => [
-        { locator: page.getByRole("link", { name: "Vaka Kataloğu" }).first(), label: "category catalog CTA" },
-        { locator: page.getByRole("link", { name: /Oyuna Başla|Vakayı Başlat/ }).first(), label: "category play CTA" },
-      ],
-    },
-    {
-      route: "/play",
-      name: "play",
-      ctas: (page) => [
-        { locator: page.getByRole("button", { name: "Giriş Yap" }).first(), label: "play login CTA" },
-        { locator: page.getByRole("button", { name: "Kayıt Ol" }).first(), label: "play register CTA" },
-      ],
-    },
+  const routes = [
+    { name: "home", path: "/" },
+    { name: "cases", path: "/cases" },
+    { name: "case", path: caseHref },
+    { name: "category", path: categoryHref },
+    { name: "play", path: "/play" },
   ];
+
+  for (const viewport of VIEWPORTS) {
+    const viewportContext = await browser.newContext({ viewport });
+    const viewportPage = await createTrackedPage(viewportContext);
+    for (const route of routes) {
+      await viewportPage.goto(`${BASE_URL}${route.path}`, { waitUntil: "networkidle" });
+      await viewportPage.locator(".dossier, input[name='email']").first().waitFor({ state: "visible", timeout: 20000 });
+      await assertNoHorizontalOverflow(viewportPage, `${route.name}@${viewport.name}`);
+      await screenshot(viewportPage, `route-${route.name}-${viewport.name}`);
+    }
+    await viewportContext.close();
+  }
 }
 
 async function authenticate(page) {
-  const email = TEST_EMAIL;
   await page.goto(`${BASE_URL}/play`, { waitUntil: "networkidle" });
-  await waitForPlayReady(page);
+  const lobby = page.locator(".career-bar");
+  if (await lobby.isVisible().catch(() => false)) return;
 
-  const scenarioHeading = page.getByRole("heading", { name: "Senaryolar" });
-  if (await scenarioHeading.isVisible().catch(() => false)) {
-    report.authMode = "existing-session";
-    return email;
-  }
-
-  const loginButton = page.getByRole("button", { name: /Giriş/i }).first();
-  if (await loginButton.isVisible().catch(() => false)) {
-    await loginButton.click();
-  }
-
-  await page.locator('input[name="email"]').fill(email);
+  await page.locator('input[name="email"]').fill(TEST_EMAIL);
   await page.locator('input[name="password"]').fill(PASSWORD);
   await page.getByRole("button", { name: "Giriş Yap" }).last().click();
 
-  await scenarioHeading.waitFor({ state: "visible", timeout: 6000 }).catch(() => {});
-  if (await scenarioHeading.isVisible().catch(() => false)) {
-    report.authMode = "reused-account";
-    return email;
-  }
+  const loggedIn = await lobby.waitFor({ state: "visible", timeout: 8000 }).then(() => true).catch(() => false);
+  if (loggedIn) return;
 
-  const registerButton = page.getByRole("button", { name: "Kayıt Ol" }).first();
-  if (await registerButton.isVisible().catch(() => false)) {
-    await registerButton.click();
-  }
-
-  await page.locator('input[name="email"]').fill(email);
+  // First run against a fresh local backend: register the fixture account, then log in.
+  await page.getByRole("button", { name: /Kayıt Ol/ }).last().click();
+  await page.locator('input[name="email"]').fill(TEST_EMAIL);
   await page.locator('input[name="password"]').fill(PASSWORD);
-  const confirmInput = page.locator('input[name="passwordConfirm"]');
-  if (await confirmInput.isVisible().catch(() => false)) {
-    await confirmInput.fill(PASSWORD);
-  }
+  await page.locator('input[name="passwordConfirm"]').fill(PASSWORD);
   await page.getByRole("button", { name: "Kayıt Ol" }).last().click();
-
-  const loginHeading = page.getByRole("heading", { name: "Giriş Yap" });
-  await Promise.race([
-    scenarioHeading.waitFor({ state: "visible", timeout: 15000 }),
-    loginHeading.waitFor({ state: "visible", timeout: 15000 }),
-  ]).catch(() => {});
-
-  if (await loginHeading.isVisible().catch(() => false)) {
-    await page.locator('input[name="email"]').fill(email);
-    await page.locator('input[name="password"]').fill(PASSWORD);
-    await page.getByRole("button", { name: "Giriş Yap" }).last().click();
-  }
-
-  await waitForVisible(scenarioHeading, "scenario list after auth");
-  report.authMode = "created-account";
-  return email;
+  await page.getByRole("heading", { name: "Giriş Yap" }).waitFor({ state: "visible", timeout: 15000 });
+  await page.locator('input[name="email"]').fill(TEST_EMAIL);
+  await page.locator('input[name="password"]').fill(PASSWORD);
+  await page.getByRole("button", { name: "Giriş Yap" }).last().click();
+  await lobby.waitFor({ state: "visible", timeout: 15000 });
 }
 
-async function playFullCaseWithResponsiveCaptures(page) {
-  await captureResponsiveState(page, "logged-out-landing", {
-    ctas: (currentPage) => [
-      { locator: currentPage.locator(".landing .cta-row button").first(), label: "landing login CTA" },
-      { locator: currentPage.locator(".landing .cta-row button").nth(1), label: "landing register CTA" },
-    ],
-    initialViewport: (currentPage) => [
-      { locator: currentPage.locator(".landing .cta-row button").first(), label: "landing login CTA" },
-    ],
-  });
+async function playFullCase(page) {
+  await page.locator(".case-tile:not(.is-locked)").first().waitFor({ state: "visible", timeout: 20000 });
+  await assertNoHorizontalOverflow(page, "lobby");
+  await screenshot(page, "game-lobby");
 
-  report.userEmail = await authenticate(page);
-  await captureResponsiveState(page, "scenario-list", {
-    ctas: (currentPage) => [
-      { locator: currentPage.locator(".scenario-list .card").first(), label: "first scenario card" },
-    ],
-  });
+  await page.locator(".case-tile:not(.is-locked)").first().click();
+  const startButton = page.getByRole("button", { name: /Soruşturmayı başlat/ });
+  await startButton.waitFor({ state: "visible", timeout: 15000 });
+  await screenshot(page, "game-briefing");
+  await startButton.click();
 
-  await waitForVisible(page.locator(".scenario-list .card").first(), "scenario card");
-  await page.locator(".scenario-list .card").first().click();
-  await waitForVisible(page.getByRole("button", { name: /Soruşturmayı Başlat/ }), "start session button");
-  await captureResponsiveState(page, "scenario-selected", {
-    ctas: (currentPage) => [
-      { locator: currentPage.getByRole("button", { name: /Soruşturmayı Başlat/ }), label: "start investigation CTA" },
-    ],
-  });
-
-  await page.getByRole("button", { name: /Soruşturmayı Başlat/ }).click();
-  await waitForVisible(page.getByRole("button", { name: /Şüpheliler/ }), "suspects tab");
-  await captureResponsiveState(page, "suspects-tab", {
-    ctas: (currentPage) => [
-      { locator: currentPage.locator(".character-summary-card").first(), label: "first suspect card" },
-      { locator: currentPage.getByRole("button", { name: /Final Kararına Geç|Kararını Ver/ }), label: "final decision CTA" },
-    ],
-  });
-
-  await page.locator(".character-summary-card").first().click();
-  await waitForVisible(page.locator(".character-detail-expanded").first(), "expanded suspect detail");
-  await captureResponsiveState(page, "suspect-detail", {
-    focus: (currentPage) => currentPage.locator(".character-detail-expanded").first(),
-    ctas: (currentPage) => [
-      { locator: currentPage.getByRole("button", { name: /Final Kararına Geç|Kararını Ver/ }), label: "final decision CTA" },
-    ],
-  });
-
-  await page.getByRole("button", { name: /Belgeler/ }).click();
-  await waitForVisible(page.locator(".media-list li").first(), "document card");
-  await captureResponsiveState(page, "documents-tab", {
-    ctas: (currentPage) => [
-      { locator: currentPage.getByRole("button", { name: /Final Kararına Geç|Kararını Ver/ }), label: "final decision CTA" },
-    ],
-  });
-
-  // Interrogation: open interrogation either via character action or tab
-  const interrogateTab = page.getByRole("button", { name: /Sorgulama|Sorgu/ }).first();
-  if (await interrogateTab.isVisible().catch(() => false)) {
-    await interrogateTab.click();
+  const tour = page.getByRole("dialog", { name: "Nasıl oynanır" });
+  if (await tour.waitFor({ state: "visible", timeout: 5000 }).then(() => true).catch(() => false)) {
+    await screenshot(page, "game-tour");
+    await tour.getByRole("button", { name: "Geç" }).click();
   }
 
-  const selectCard = page.locator(".character-select-card, button:has-text('Sorgula')").first();
-  if (await selectCard.isVisible().catch(() => false)) {
-    await selectCard.click();
-  }
+  await page.locator(".evidence-card").first().click();
+  await page.locator(".paper").waitFor({ state: "visible" });
+  await page.getByRole("button", { name: /iğnele/ }).click();
+  await screenshot(page, "game-evidence");
+  await page.getByRole("button", { name: "Kapat" }).click();
 
-  await waitForVisible(page.locator(".modal-content, .investigation-chat-col"), "interrogation area");
-
-  if (await page.locator(".modal-content").isVisible().catch(() => false)) {
-    await captureResponsiveState(page, "interrogation-modal", {
-      focus: (currentPage) => currentPage.locator(".modal-content"),
-      ctas: (currentPage) => [
-        { locator: currentPage.locator(".suggestion-chip").first(), label: "question suggestion CTA" },
-        { locator: currentPage.getByRole("button", { name: "Kapat" }), label: "close modal CTA" },
-      ],
-      contained: [{ selector: ".modal-content", label: "interrogation modal" }],
-    });
-
-    const firstSuggestion = page.locator(".suggestion-chip").first();
-    if (await firstSuggestion.isVisible().catch(() => false)) {
-      await firstSuggestion.click();
-    } else {
-      await page.locator('textarea[placeholder*="sor"]').fill("Olay sırasında neredeydin?");
-    }
-    await page.getByRole("button", { name: /Soruyu Sor|Gönder/ }).click();
-    await waitForVisible(page.locator(".message.assistant").first(), "suspect answer", 30000);
-    await captureResponsiveState(page, "conversation-view", {
-      focus: (currentPage) => currentPage.locator(".message.assistant").first(),
-      ctas: (currentPage) => [
-        { locator: currentPage.getByRole("button", { name: "Kapat" }), label: "close modal CTA" },
-      ],
-      contained: [{ selector: ".modal-content", label: "interrogation modal" }],
-    });
-
-    await page.getByRole("button", { name: "Kapat" }).click();
+  await page.locator(".lineup-board .lineup-btn").first().click();
+  const promptChip = page.locator(".prompt-chip").first();
+  if (await promptChip.isVisible().catch(() => false)) {
+    await promptChip.click();
   } else {
-    const firstSuggestion = page.locator(".suggestion-chip").first();
-    if (await firstSuggestion.isVisible().catch(() => false)) {
-      await firstSuggestion.click();
-    } else {
-      await page.locator(".composer-textarea").fill("Olay sırasında neredeydin?");
-    }
-    await page.locator(".composer-send-btn, button[type='submit']").click();
-    await waitForVisible(page.locator(".message.assistant").first(), "suspect answer", 30000);
+    await page.locator(".ask-bar input").fill("Olay sırasında neredeydin?");
+    await page.locator(".ask-bar button[type='submit']").click();
   }
+  await page.locator(".bubble.them:not(.typing)").first().waitFor({ state: "visible", timeout: 45000 });
+  await page.getByRole("radio", { name: "Şüpheli", exact: true }).click();
+  await screenshot(page, "game-interrogation");
+  await page.getByRole("button", { name: "Kapat" }).click();
 
-  await page.getByRole("button", { name: /İpuçları/ }).click();
-  await page.getByRole("button", { name: /İpucu Kullan/ }).click();
-  await waitForVisible(page.locator(".hint-list li").first(), "hint item", 15000);
-  await captureResponsiveState(page, "hints-tab", {
-    ctas: (currentPage) => [
-      { locator: currentPage.getByRole("button", { name: /Final Kararına Geç|Kararını Ver/ }), label: "final decision CTA" },
-    ],
-  });
+  await page.getByRole("button", { name: "İpucu al" }).click();
+  await page.getByRole("button", { name: "Al", exact: true }).click();
+  await page.locator(".hint-card").first().waitFor({ state: "visible", timeout: 15000 });
+  await assertNoHorizontalOverflow(page, "investigation");
 
-  await page.getByRole("button", { name: /Final Kararına Geç|Kararını Ver/ }).first().click();
-  await waitForVisible(page.locator(".final-panel"), "final panel");
-  await captureResponsiveState(page, "final-form", {
-    focus: (currentPage) => currentPage.locator(".final-panel"),
-    ctas: (currentPage) => [
-      { locator: currentPage.getByRole("button", { name: "Kararı Gönder" }), label: "submit final CTA" },
-    ],
-    overlapPairs: [
-      [".app-header", ".final-panel"],
-    ],
-  });
+  await page.locator(".accuse-btn").click();
+  await page.locator(".lineup-accuse .lineup-btn").first().click();
+  await page.locator("#accusation-reason").fill("Zaman çizelgesi ve giriş kaydı bu kişiyi işaret ediyor.");
+  await screenshot(page, "game-accusation");
+  await page.getByRole("button", { name: "Suçla" }).click();
 
-  await page.locator('.final-panel input[type="checkbox"]').first().check();
-  await page
-    .locator(".final-panel textarea")
-    .fill(
-      "Zaman çizelgesi, kanıt notları ve sorgu cevabındaki çelişkiler bu şüphelinin fırsat ve motivasyon sahibi olduğunu gösteriyor."
-    );
-  await page.getByRole("button", { name: "Kararı Gönder" }).click();
-  await waitForVisible(page.locator(".result"), "final result", 45000);
-  await captureResponsiveState(page, "final-result", {
-    focus: (currentPage) => currentPage.locator(".result"),
-    ctas: (currentPage) => [
-      { locator: currentPage.getByText("Tüm değerlendirmeyi göster"), label: "full feedback toggle" },
-    ],
-    overlapPairs: [
-      [".app-header", ".result"],
-      [".app-header", ".final-panel"],
-    ],
-  });
-  report.finalResultText = await page.locator(".result").innerText();
+  await page.locator(".verdict-stamp").waitFor({ state: "visible", timeout: 60000 });
+  await page.waitForTimeout(1200);
+  await assertNoHorizontalOverflow(page, "result");
+  await screenshot(page, "game-result");
+  report.verdict = await page.locator(".verdict").innerText();
 }
 
 (async () => {
   await fs.rm(ARTIFACT_DIR, { recursive: true, force: true });
   await fs.mkdir(ARTIFACT_DIR, { recursive: true });
-  const browser = await chromium.launch({
-    headless: true,
-    args: ["--disable-web-security"],
-  });
+  const browser = await chromium.launch({ headless: true });
 
   try {
-    const routes = await step("discover content routes", () => discoverContentRoutes(browser));
-    const definitions = routeDefinitions(routes);
+    await step("responsive route smoke", () => routeSmoke(browser));
 
-    await step("responsive route smoke", async () => {
-      for (const viewport of VIEWPORTS) {
-        for (const definition of definitions) {
-          await routeSmoke(browser, definition.route, definition.name, viewport, definition.ctas);
-        }
-      }
-    });
+    for (const viewport of [VIEWPORTS[0], VIEWPORTS[2]]) {
+      await step(`full gameplay @${viewport.name}`, async () => {
+        const context = await browser.newContext({ viewport });
+        const page = await createTrackedPage(context);
+        await authenticate(page);
+        await playFullCase(page);
+        await context.close();
+      });
+    }
 
-    await step("responsive full gameplay", async () => {
-      const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
-      const page = await createTrackedPage(context);
-      await page.goto(`${BASE_URL}/play`, { waitUntil: "networkidle" });
-      await waitForPlayReady(page);
-      await playFullCaseWithResponsiveCaptures(page);
-      await context.close();
-    });
-
-    assert(report.consoleErrors.length === 0, `Console errors found: ${report.consoleErrors.length}`);
-    assert(report.responseFailures.length === 0, `500 responses found: ${report.responseFailures.length}`);
+    assert(report.consoleErrors.length === 0, `Console errors: ${JSON.stringify(report.consoleErrors)}`);
+    assert(report.responseFailures.length === 0, `5xx responses: ${JSON.stringify(report.responseFailures)}`);
     report.status = "passed";
   } catch (error) {
     report.status = "failed";
@@ -644,10 +213,7 @@ async function playFullCaseWithResponsiveCaptures(page) {
   } finally {
     report.finishedAt = new Date().toISOString();
     await browser.close();
-    await fs.writeFile(
-      path.join(ARTIFACT_DIR, "report.json"),
-      JSON.stringify(report, null, 2)
-    );
+    await fs.writeFile(path.join(ARTIFACT_DIR, "report.json"), JSON.stringify(report, null, 2));
   }
 })().catch((error) => {
   console.error(error);

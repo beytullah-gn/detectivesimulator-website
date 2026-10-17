@@ -10,6 +10,7 @@ import {
   storeToken,
 } from "../services/authService";
 import {
+  fetchScenarioAccess,
   fetchScenarioCharacters,
   fetchScenarioMedia,
   fetchScenarios,
@@ -46,12 +47,13 @@ function readSavedSession() {
 export function useDetectiveGame() {
   const [token, setToken] = useState(() => getStoredToken());
   const [user, setUser] = useState(null);
-  const [view, setView] = useState(() => (getStoredToken() ? VIEW.SCENARIOS : VIEW.LANDING));
+  const [view, setView] = useState(() => (getStoredToken() ? VIEW.SCENARIOS : VIEW.LOGIN));
   const [authLoading, setAuthLoading] = useState(false);
   const [scenarioLoading, setScenarioLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
   const [scenarios, setScenarios] = useState([]);
+  const [lockedScenarioIds, setLockedScenarioIds] = useState([]);
 
   // Lazy restore from session storage to prevent React 19 render-in-effect warnings
   const savedData = useRef(readSavedSession());
@@ -81,6 +83,18 @@ export function useDetectiveGame() {
       return "";
     }
   });
+
+  const pendingScenarioTitle = useMemo(() => {
+    if (!pendingScenarioSlug) return "";
+    const matched = scenarios.find(
+      (s) => s.slug === pendingScenarioSlug || s.id === pendingScenarioSlug
+    );
+    if (matched?.title) return matched.title;
+    return pendingScenarioSlug
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }, [pendingScenarioSlug, scenarios]);
 
   const isLoggedIn = Boolean(token);
   const isSessionActive = Boolean(session?.sessionId);
@@ -302,9 +316,9 @@ export function useDetectiveGame() {
     }
   }
 
-  async function handleAskQuestion(event, overrideCharacterId) {
+  async function handleAskQuestion(event, overrideCharacterId, overrideQuestion) {
     if (event?.preventDefault) event.preventDefault();
-    const trimmedQuestion = question.trim();
+    const trimmedQuestion = (overrideQuestion ?? question).trim();
     const targetCharacterId = overrideCharacterId || activeCharacterId || activeCharacter?.id;
 
     if (!trimmedQuestion) {
@@ -351,7 +365,7 @@ export function useDetectiveGame() {
         };
       });
     } catch (currentError) {
-      // Keep question in state on error so player does not lose their typed question
+      // Keep the question so the player does not lose it
       setQuestion(trimmedQuestion);
       handleApiError(currentError, "Interrogation error");
     } finally {
@@ -528,8 +542,14 @@ export function useDetectiveGame() {
         handleApiError(err, "Session history error");
         return { sessions: [] };
       }),
-    ]).then(([scenarioList, sessionsData]) => {
+      fetchScenarioAccess(token).catch((err) => {
+        // Lock badges are cosmetic; the server still enforces access on session start.
+        console.error("Scenario access fetch error:", err);
+        return [];
+      }),
+    ]).then(([scenarioList, sessionsData, accessList]) => {
       if (!active) return;
+      setLockedScenarioIds(accessList.filter((item) => !item.isUnlocked).map((item) => item.id));
       const normalizedScenarios = Array.isArray(scenarioList) ? scenarioList : [];
       setScenarios(normalizedScenarios);
       setSessionHistory(Array.isArray(sessionsData?.sessions) ? sessionsData.sessions : []);
@@ -598,17 +618,21 @@ export function useDetectiveGame() {
     actionLoading,
     error,
     scenarios,
+    lockedScenarioIds,
     selectedScenario,
     scenarioMedia,
     characters,
     relationsByCharacter,
     activeCharacter,
     conversations,
+    session,
     question,
     hints,
     finalAnswer,
     finalResult,
     sessionHistory,
+    pendingScenarioSlug,
+    pendingScenarioTitle,
     isLoggedIn,
     isSessionActive,
     handleLoginSubmit,

@@ -1,0 +1,151 @@
+/* Mugshot ------------------------------------------------------------------- */
+.mugshot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mugshot-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--ds-radius);
+  background:
+    repeating-linear-gradient(180deg, transparent 0 15px, color-mix(in srgb, var(--ds-text) 10%, transparent) 15px 16px),
+    var(--ds-surface-subtle);
+  border: 1px solid var(--ds-border);
+  overflow: hidden;
+  transition: border-color 150ms ease;
+}
+
+/* Head-and-shoulders silhouette drawn with two radial shapes */
+.mugshot-silhouette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 22% 18% at 50% 40%, var(--ds-border-control) 98%, transparent 100%),
+    radial-gradient(ellipse 42% 30% at 50% 88%, var(--ds-border-control) 98%, transparent 100%);
+  opacity: 0.9;
+}
+
+.mugshot-plate {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 8px;
+  white-space: nowrap;
+  border-radius: 3px;
+  background: var(--ds-text);
+  color: var(--ds-bg);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.mugshot-done {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ds-success);
+}
+
+.suspicion-1 .mugshot-frame {
+  border-color: color-mix(in srgb, var(--ds-accent) 60%, var(--ds-border));
+}
+
+.suspicion-2 .mugshot-frame {
+  border-color: var(--ds-danger);
+}
+
+.mugshot-caption {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mugshot-caption strong {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mugshot-caption small {
+  font-size: 12px;
+  color: var(--ds-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mugshot-sm {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.mugshot-sm .mugshot-frame {
+  width: 56px;
+  flex-shrink: 0;
+}
+
+.mugshot-sm .mugshot-plate {
+  display: none;
+}
+
+.suspicion-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.suspicion-dots span {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ds-border-control);
+}
+
+.suspicion-dots span.on {
+  background: var(--ds-danger);
+}
+
+.lineup {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.lineup-btn {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-lg);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.lineup-btn:hover {
+  background: var(--ds-surface);
+  border-color: var(--ds-border);
+}
+
+.lineup-btn.active {
+  background: var(--ds-surface);
+  border-color: var(--ds-accent);
+}
+

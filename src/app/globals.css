@@ -1,31 +1,37 @@
 @import "tailwindcss";
 
+/* Light theme: case-file paper. Dark theme (default): noir. One brass accent. */
 :root {
-  /* Design Tokens — Light Theme (Default) */
-  --ds-bg: #F5F6F4;
+  --ds-bg: #F3F1EC;
   --ds-surface: #FFFFFF;
-  --ds-surface-subtle: #EDF0ED;
-  --ds-surface-hover: #E3E7E3;
-  --ds-text: #17211F;
-  --ds-text-muted: #5B6863;
-  --ds-border: #D8DEDA;
-  --ds-border-control: #B8C4BE;
-  --ds-border-focus: #24675B;
-  --ds-accent: #24675B;
-  --ds-accent-hover: #1B5147;
-  --ds-accent-soft: #EDF5F1;
+  --ds-surface-subtle: #ECE9E2;
+  --ds-surface-hover: #E3DFD6;
+  --ds-text: #1C1A17;
+  --ds-text-muted: #6B665D;
+  --ds-border: #DDD8CE;
+  --ds-border-control: #C4BEB2;
+  --ds-border-focus: #8A5A12;
+  --ds-accent: #8A5A12;
+  --ds-accent-hover: #6F480E;
+  --ds-accent-soft: #F5ECDC;
   --ds-accent-contrast: #FFFFFF;
-  --ds-danger: #B3261E;
-  --ds-danger-soft: #FDF2F1;
+  --ds-danger: #A63A32;
+  --ds-danger-soft: #F7E9E7;
   --ds-danger-contrast: #FFFFFF;
-  --ds-success: #24675B;
-  --ds-success-soft: #EDF5F1;
-  --ds-shadow-sm: 0 1px 3px rgba(23, 33, 31, 0.05), 0 1px 2px rgba(23, 33, 31, 0.03);
-  --ds-shadow-md: 0 4px 14px rgba(23, 33, 31, 0.08), 0 1px 3px rgba(23, 33, 31, 0.04);
+  --ds-success: #2F6E4B;
+  --ds-success-soft: #E6F0EA;
+  --ds-paper: #F7F2E6;
+  --ds-paper-text: #2B261D;
+  --ds-paper-line: #E4DCC8;
+  --ds-folder: #D6BD86;
+  --ds-folder-edge: #B99D62;
+  --ds-folder-text: #3A2E15;
+  --ds-shadow-sm: 0 1px 2px rgba(28, 26, 23, 0.06);
+  --ds-shadow-md: 0 8px 24px rgba(28, 26, 23, 0.12);
   --ds-radius-sm: 6px;
   --ds-radius: 8px;
-  --ds-radius-md: 10px;
-  --ds-radius-lg: 12px;
+  --ds-radius-md: 8px;
+  --ds-radius-lg: 10px;
   --ds-radius-full: 9999px;
 
   /* Tailwind CSS compatibility variables */
@@ -35,27 +41,32 @@
 
 .dark,
 [data-theme="dark"] {
-  /* Design Tokens — Dark Theme */
-  --ds-bg: #101715;
-  --ds-surface: #17211E;
-  --ds-surface-subtle: #22302A;
-  --ds-surface-hover: #2B3D35;
-  --ds-text: #EEF2EF;
-  --ds-text-muted: #AAB6AE;
-  --ds-border: #2D3D33;
-  --ds-border-control: #3E5448;
-  --ds-border-focus: #94C7B3;
-  --ds-accent: #94C7B3;
-  --ds-accent-hover: #A7D6C4;
-  --ds-accent-soft: #20332B;
-  --ds-accent-contrast: #101715;
-  --ds-danger: #E57373;
-  --ds-danger-soft: #2E1B1A;
-  --ds-danger-contrast: #101715;
-  --ds-success: #94C7B3;
-  --ds-success-soft: #20332B;
-  --ds-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
-  --ds-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --ds-bg: #0F0F0E;
+  --ds-surface: #181715;
+  --ds-surface-subtle: #211F1C;
+  --ds-surface-hover: #2A2824;
+  --ds-text: #EDEAE4;
+  --ds-text-muted: #A39E94;
+  --ds-border: #2C2A26;
+  --ds-border-control: #3D3A35;
+  --ds-border-focus: #D4A24C;
+  --ds-accent: #D4A24C;
+  --ds-accent-hover: #E0B467;
+  --ds-accent-soft: #2A2217;
+  --ds-accent-contrast: #15120C;
+  --ds-danger: #D9776E;
+  --ds-danger-soft: #2E1C1A;
+  --ds-danger-contrast: #15120C;
+  --ds-success: #7DB892;
+  --ds-success-soft: #1A2A20;
+  --ds-paper: #E9E2D0;
+  --ds-paper-text: #26211A;
+  --ds-paper-line: #D3C9B1;
+  --ds-folder: #B49A62;
+  --ds-folder-edge: #8F7845;
+  --ds-folder-text: #2A2110;
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ds-shadow-md: 0 10px 28px rgba(0, 0, 0, 0.5);
 
   --background: var(--ds-bg);
   --foreground: var(--ds-text);
@@ -171,9 +182,9 @@ select {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  height: 38px;
-  padding: 0 14px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
   border-radius: var(--ds-radius);
   font-size: 13px;
   font-weight: 500;
@@ -236,15 +247,15 @@ select {
 }
 
 .ds-btn-sm {
-  height: 32px;
+  height: 28px;
   padding: 0 10px;
   font-size: 12px;
   border-radius: var(--ds-radius-sm);
 }
 
 .ds-btn-lg {
-  height: 44px;
-  padding: 0 20px;
+  height: 36px;
+  padding: 0 16px;
   font-size: 14px;
   border-radius: var(--ds-radius);
 }

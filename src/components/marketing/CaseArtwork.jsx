@@ -1,29 +1,29 @@
-import { getScenarioCoverUrl } from "@/lib/content";
+import { getCasePhotoUrl, getCaseNumber } from "@/lib/content";
+import { formatDifficulty } from "@/utils/formatters";
+import "./dossier.css";
 
-export default function CaseArtwork({
-  scenario,
-  className = "",
-  titleClassName = "",
-  eyebrow = "",
-}) {
-  const coverUrl = getScenarioCoverUrl(scenario);
-  const ariaLabel = `${scenario?.title || "Vaka"} kapak görseli`;
-  const categoryTitle = scenario?.category?.title || "Vaka Dosyası";
+// Case cover drawn as a stamped manila folder; a photo (if provided) is clipped on as a polaroid.
+export default function CaseArtwork({ scenario, className = "", stamp = "" }) {
+  const photoUrl = getCasePhotoUrl(scenario);
+  const categoryTitle = scenario?.category?.title || "Vaka";
 
   return (
     <div
-      className={className}
-      style={{
-        backgroundImage: coverUrl ? `url(${coverUrl})` : "none",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundColor: "var(--ds-surface-subtle)",
-      }}
+      className={`dossier ${photoUrl ? "dossier-has-photo" : ""} ${className}`}
       role="img"
-      aria-label={ariaLabel}
+      aria-label={`${scenario?.title || "Vaka"} dosyası`}
     >
-      {eyebrow ? <span className={eyebrow}>{categoryTitle}</span> : null}
-      {titleClassName ? <strong className={titleClassName}>{scenario?.title}</strong> : null}
+      <span className="dossier-tab">{getCaseNumber(scenario)}</span>
+      <div className="dossier-body">
+        <span className="dossier-category">{categoryTitle}</span>
+        <strong className="dossier-title">{scenario?.title}</strong>
+        <span className="dossier-meta">{formatDifficulty(scenario?.difficulty)}</span>
+        <span className="dossier-stamp">{stamp || "Gizli"}</span>
+      </div>
+      {photoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="dossier-photo" src={photoUrl} alt="" loading="lazy" />
+      ) : null}
     </div>
   );
 }

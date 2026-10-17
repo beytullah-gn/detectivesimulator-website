@@ -27,3 +27,8 @@ export async function fetchScenarioRelations(scenarioId, token) {
     { token }
   );
 }
+
+export async function fetchScenarioAccess(token) {
+  const data = await apiFetch("/game/mobile/scenarios", { token });
+  return Array.isArray(data?.scenarios) ? data.scenarios : [];
+}

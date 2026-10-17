@@ -507,3 +507,95 @@ export function PlayIcon({ size = 18, className = "" }) {
     </svg>
   );
 }
+
+function BaseIcon({ size, className, children, fill = "none" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill={fill}
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      {children}
+    </svg>
+  );
+}
+
+export function StarIcon({ size = 18, className = "", filled = false }) {
+  return (
+    <BaseIcon size={size} className={className} fill={filled ? "currentColor" : "none"}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </BaseIcon>
+  );
+}
+
+export function PinIcon({ size = 18, className = "", filled = false }) {
+  return (
+    <BaseIcon size={size} className={className} fill={filled ? "currentColor" : "none"}>
+      <path d="M12 17v5" />
+      <path d="M9 10.76V6h6v4.76a2 2 0 0 0 1.11 1.79l1.78.9A2 2 0 0 1 19 15.24V16H5v-.76a2 2 0 0 1 1.11-1.79l1.78-.9A2 2 0 0 0 9 10.76z" />
+      <path d="M8 6h8" />
+    </BaseIcon>
+  );
+}
+
+export function CameraIcon({ size = 18, className = "" }) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+      <circle cx="12" cy="13" r="4" />
+    </BaseIcon>
+  );
+}
+
+export function ActivityIcon({ size = 18, className = "" }) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </BaseIcon>
+  );
+}
+
+export function ClipboardIcon({ size = 18, className = "" }) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+      <rect x="8" y="2" width="8" height="4" rx="1" />
+    </BaseIcon>
+  );
+}
+
+export function HelpCircleIcon({ size = 18, className = "" }) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </BaseIcon>
+  );
+}
+
+export function PenIcon({ size = 18, className = "" }) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" />
+    </BaseIcon>
+  );
+}
+
+export function TargetIcon({ size = 18, className = "" }) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </BaseIcon>
+  );
+}
