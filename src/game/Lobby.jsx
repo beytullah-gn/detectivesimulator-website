@@ -45,7 +45,6 @@ export default function Lobby({
   lockedScenarioIds = [],
   sessionHistory,
   onSelectScenario,
-  onResumeSession,
   loading,
 }) {
   const career = useMemo(() => summarizeCareer(sessionHistory), [sessionHistory]);
@@ -63,7 +62,9 @@ export default function Lobby({
         <button
           type="button"
           className="resume-strip"
-          onClick={() => onResumeSession(resume.id)}
+          onClick={() =>
+            onSelectScenario(scenarios.find((item) => item.id === resume?.scenario?.id) || resume.scenario)
+          }
           disabled={loading}
         >
           <span className="resume-pulse" aria-hidden="true" />
@@ -76,7 +77,7 @@ export default function Lobby({
           </span>
           <span className="ds-btn ds-btn-primary">
             <PlayIcon size={14} />
-            Devam
+            Aç
           </span>
         </button>
       ) : null}

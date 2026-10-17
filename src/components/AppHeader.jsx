@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
+import { SoundToggles } from "../game/media";
 import { LogOutIcon, UserIcon } from "./icons";
 
 export default function AppHeader({
@@ -33,6 +34,7 @@ export default function AppHeader({
       </nav>
 
       <div className="header-actions">
+        <SoundToggles />
         <ThemeToggle />
 
         {isLoggedIn ? (

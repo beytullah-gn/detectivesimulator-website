@@ -54,6 +54,7 @@ async function createTrackedPage(context) {
       text.includes("WebSocket connection to") ||
       text.includes("/_next/webpack-hmr") ||
       text.includes("Encountered a script tag") ||
+      text.includes("AudioContext was not allowed") ||
       text.includes("Login error Error:") ||
       text.includes("status of 401");
     if (message.type() === "error" && !isNoise) {
@@ -137,10 +138,17 @@ async function playFullCase(page) {
   await screenshot(page, "game-lobby");
 
   await page.locator(".case-tile:not(.is-locked)").first().click();
-  const startButton = page.getByRole("button", { name: /Soruşturmayı başlat/ });
-  await startButton.waitFor({ state: "visible", timeout: 15000 });
+  await page.locator(".briefing-story .paper").waitFor({ state: "visible", timeout: 15000 });
   await screenshot(page, "game-briefing");
-  await startButton.click();
+
+  // A case with an open run offers resume or restart; restart keeps the test deterministic.
+  const restart = page.getByRole("button", { name: "Baştan başla" });
+  if (await restart.isVisible().catch(() => false)) {
+    await restart.click();
+    await page.getByRole("button", { name: "Evet, baştan başla" }).click();
+  } else {
+    await page.getByRole("button", { name: /Soruşturmayı başlat/ }).click();
+  }
 
   const tour = page.getByRole("dialog", { name: "Nasıl oynanır" });
   if (await tour.waitFor({ state: "visible", timeout: 5000 }).then(() => true).catch(() => false)) {
@@ -148,11 +156,16 @@ async function playFullCase(page) {
     await tour.getByRole("button", { name: "Geç" }).click();
   }
 
-  await page.locator(".evidence-card").first().click();
-  await page.locator(".paper").waitFor({ state: "visible" });
+  await page.locator(".casefile-card").click();
+  await page.locator(".paper-story").waitFor({ state: "visible" });
+  await screenshot(page, "game-casefile");
+  await page.getByRole("button", { name: "Pano" }).click();
+
+  await page.locator(".evidence-card.has-photo").first().click();
+  await page.locator(".paper .evidence-photo").waitFor({ state: "visible" });
   await page.getByRole("button", { name: /iğnele/ }).click();
   await screenshot(page, "game-evidence");
-  await page.getByRole("button", { name: "Kapat" }).click();
+  await page.getByRole("button", { name: "Pano" }).click();
 
   await page.locator(".lineup-board .lineup-btn").first().click();
   const promptChip = page.locator(".prompt-chip").first();
@@ -162,14 +175,18 @@ async function playFullCase(page) {
     await page.locator(".ask-bar input").fill("Olay sırasında neredeydin?");
     await page.locator(".ask-bar button[type='submit']").click();
   }
-  await page.locator(".bubble.them:not(.typing)").first().waitFor({ state: "visible", timeout: 45000 });
+  await page.locator(".bubble.them:not(.typing)").first().waitFor({ state: "visible", timeout: 60000 });
   await page.getByRole("radio", { name: "Şüpheli", exact: true }).click();
+  await page.locator(".present-btn").click();
+  await page.locator(".evidence-picker").waitFor({ state: "visible" });
   await screenshot(page, "game-interrogation");
-  await page.getByRole("button", { name: "Kapat" }).click();
+  await page.locator(".present-btn").click();
+  await page.getByRole("button", { name: "Pano" }).click();
 
   await page.getByRole("button", { name: "İpucu al" }).click();
   await page.getByRole("button", { name: "Al", exact: true }).click();
   await page.locator(".hint-card").first().waitFor({ state: "visible", timeout: 15000 });
+  await assertNoHorizontalOverflow(page, "hints");
   await assertNoHorizontalOverflow(page, "investigation");
 
   await page.locator(".accuse-btn").click();

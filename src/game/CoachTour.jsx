@@ -17,14 +17,25 @@ export default function CoachTour({ steps, onDone }) {
   const [rect, setRect] = useState(null);
   const step = steps[index];
 
-  const update = useCallback(() => setRect(measure(step.target)), [step.target]);
+  const update = useCallback(() => {
+    const next = measure(step.target);
+    // A target scrolled out of view or collapsed to zero size gets a centered card instead.
+    setRect(next && next.width > PAD * 2 && next.height > PAD * 2 ? next : null);
+  }, [step.target]);
 
   useLayoutEffect(() => {
     const element = document.querySelector(`[data-tour="${step.target}"]`);
-    element?.scrollIntoView({ block: "center", behavior: "instant" });
+    // Skip steps whose target is not on screen so the spotlight never points at empty space.
+    if (!element) {
+      const frame = requestAnimationFrame(() =>
+        index < steps.length - 1 ? setIndex(index + 1) : onDone()
+      );
+      return () => cancelAnimationFrame(frame);
+    }
+    element.scrollIntoView({ block: "center", behavior: "instant" });
     const frame = requestAnimationFrame(update);
     return () => cancelAnimationFrame(frame);
-  }, [step.target, update]);
+  }, [step.target, update, index, steps.length, onDone]);
 
   useEffect(() => {
     window.addEventListener("resize", update);
@@ -68,6 +79,11 @@ export default function CoachTour({ steps, onDone }) {
           <button type="button" className="ds-btn ds-btn-ghost ds-btn-sm" onClick={onDone}>
             Geç
           </button>
+          {index > 0 ? (
+            <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setIndex(index - 1)}>
+              Geri
+            </button>
+          ) : null}
           <button
             type="button"
             className="ds-btn ds-btn-primary ds-btn-sm"

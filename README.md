@@ -63,3 +63,17 @@ AI cevapları Directus backend üzerinden OpenRouter ile üretilir. Backend tara
 - Oyun state ve API aksiyonları `src/hooks/useDetectiveGame.js` içinde toplanmıştır.
 - UI akışı Directus içerik modeli ile uyumludur.
 - Görsel bileşenlerde mevcut deneyimi bozmamak için native `img` kullanımı korunmuştur.
+
+## Case Media
+
+Evidence images, audio clips, hint media and narrated briefings live in `public/case-media/<case-slug>/`.
+They are generated from code, so they can be re-rendered after a story change:
+
+```bash
+node scripts/case-media/render-images.cjs   # HTML templates -> JPEG (Playwright)
+node scripts/case-media/render-audio.cjs    # macOS `say` (Yelda) + ffmpeg effects -> MP3
+```
+
+`scripts/case-media/images.cjs` and `audio.cjs` hold the content; paths must match the `media_url`
+values in the backend's `scripts/content/cases/*.json`. Background music and sound effects are
+synthesized in the browser (`src/game/audio/soundscape.js`); there are no audio assets for them.

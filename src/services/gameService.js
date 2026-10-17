@@ -1,17 +1,17 @@
 import { apiFetch } from "./apiClient";
 
-export async function startSession(scenarioId, token) {
+export async function startSession(scenarioId, token, { restart = false } = {}) {
   return apiFetch("/game/session/start", {
     method: "POST",
-    body: { scenarioId },
+    body: { scenarioId, restart },
     token,
   });
 }
 
-export async function interrogate({ sessionId, characterId, question, token }) {
+export async function interrogate({ sessionId, characterId, question, evidenceId, token }) {
   return apiFetch("/game/interrogate", {
     method: "POST",
-    body: { sessionId, characterId, question },
+    body: { sessionId, characterId, question, evidenceId },
     token,
   });
 }

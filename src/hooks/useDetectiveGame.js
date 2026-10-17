@@ -292,18 +292,21 @@ export function useDetectiveGame() {
     await handleLoadScenarioData(scenario.id);
   }
 
-  async function handleStartSession() {
+  async function handleStartSession({ restart = false } = {}) {
     if (!selectedScenario) return false;
 
     setActionLoading(true);
     setErrorMessage("");
 
     try {
-      const data = await startSession(selectedScenario.id, token);
+      const data = await startSession(selectedScenario.id, token, { restart });
       if (data?.resumed && data?.sessionId) {
         await handleResumeSession(data.sessionId);
       } else {
         setSession(data);
+        setConversations({});
+        setHints([]);
+        setFinalAnswer({ selected: [], explanation: "" });
         setFinalResult(null);
       }
       await handleLoadSessionHistory();
@@ -316,12 +319,12 @@ export function useDetectiveGame() {
     }
   }
 
-  async function handleAskQuestion(event, overrideCharacterId, overrideQuestion) {
+  async function handleAskQuestion(event, overrideCharacterId, overrideQuestion, evidenceId) {
     if (event?.preventDefault) event.preventDefault();
     const trimmedQuestion = (overrideQuestion ?? question).trim();
     const targetCharacterId = overrideCharacterId || activeCharacterId || activeCharacter?.id;
 
-    if (!trimmedQuestion) {
+    if (!trimmedQuestion && !evidenceId) {
       setErrorMessage("Lütfen bir soru yazın.");
       return;
     }
@@ -346,6 +349,7 @@ export function useDetectiveGame() {
         sessionId: session.sessionId,
         characterId: targetCharacterId,
         question: trimmedQuestion,
+        evidenceId,
         token,
       });
 
@@ -359,14 +363,14 @@ export function useDetectiveGame() {
           ...previous,
           [targetCharacterId]: [
             ...currentConversation,
-            { role: "user", content: trimmedQuestion },
+            { role: "user", content: data?.question || trimmedQuestion },
             { role: "assistant", content: data?.answer || "" },
           ],
         };
       });
     } catch (currentError) {
       // Keep the question so the player does not lose it
-      setQuestion(trimmedQuestion);
+      if (!evidenceId) setQuestion(trimmedQuestion);
       handleApiError(currentError, "Interrogation error");
     } finally {
       setActionLoading(false);
@@ -554,6 +558,13 @@ export function useDetectiveGame() {
       setScenarios(normalizedScenarios);
       setSessionHistory(Array.isArray(sessionsData?.sessions) ? sessionsData.sessions : []);
       setScenarioLoading(false);
+
+      // A session restored from this device may hold stale case content; refresh it from the server.
+      if (session?.sessionId && selectedScenario?.id) {
+        const fresh = normalizedScenarios.find((item) => item.id === selectedScenario.id);
+        if (fresh) setSelectedScenario((previous) => ({ ...previous, ...fresh }));
+        handleLoadScenarioData(selectedScenario.id);
+      }
 
       // Auto-select pending scenario if player came from case briefing
       if (pendingScenarioSlug && !session?.sessionId) {

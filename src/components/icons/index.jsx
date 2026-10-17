@@ -599,3 +599,22 @@ export function TargetIcon({ size = 18, className = "" }) {
     </BaseIcon>
   );
 }
+
+export function MicIcon({ size = 18, className = "" }) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <rect x="9" y="2" width="6" height="12" rx="3" />
+      <path d="M5 10a7 7 0 0 0 14 0" />
+      <line x1="12" y1="17" x2="12" y2="22" />
+    </BaseIcon>
+  );
+}
+
+export function RotateIcon({ size = 18, className = "" }) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <polyline points="1 4 1 10 7 10" />
+      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+    </BaseIcon>
+  );
+}

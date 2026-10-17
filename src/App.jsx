@@ -6,6 +6,8 @@ import AppHeader from "./components/AppHeader";
 import AlertMessage from "./components/AlertMessage";
 import AuthPanel from "./components/AuthPanel";
 import ScenarioPage from "./views/ScenarioPage";
+import { useEffect } from "react";
+import { getSoundscape } from "./game/audio/soundscape";
 import { VIEW, useDetectiveGame } from "./hooks/useDetectiveGame";
 
 function App() {
@@ -42,7 +44,6 @@ function App() {
     handleAskQuestion,
     handleUseHint,
     handleResetFlow,
-    handleResumeSession,
     handleToggleGuilty,
     handleSubmitFinalAnswer,
     setQuestion,
@@ -50,6 +51,17 @@ function App() {
   } = useDetectiveGame();
 
   const caseTitle = selectedScenario?.title || pendingScenarioTitle;
+
+  // Browsers only allow audio after a user gesture; start the soundscape on the first one.
+  useEffect(() => {
+    const unlock = () => getSoundscape().unlock();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
 
   return (
     <div className="app">
@@ -101,7 +113,6 @@ function App() {
             sessionId={session?.sessionId || ""}
             onScenarioSelect={handleScenarioSelect}
             sessionHistory={sessionHistory}
-            onResumeSession={handleResumeSession}
             onStartSession={handleStartSession}
             sessionActive={isSessionActive}
             conversations={conversations}

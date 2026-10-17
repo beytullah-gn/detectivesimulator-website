@@ -6,7 +6,8 @@ import {
   CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  CloseIcon,
+  ClipboardIcon,
+  FileTextIcon,
   HelpCircleIcon,
   LightbulbIcon,
   PinIcon,
@@ -14,19 +15,24 @@ import {
   TargetIcon,
 } from "../components/icons";
 import { formatCharacterName } from "../utils/formatters";
+import { playSfx } from "./audio/soundscape";
 import { MAX_HINTS } from "./career";
 import CoachTour from "./CoachTour";
+import { AudioPlayer, MediaBlock, isAudioUrl, isImageUrl } from "./media";
 import { EvidenceIcon, Mugshot, SUSPICION_LABELS, SuspicionDots } from "./pieces";
 import { useCaseProgress } from "./useCaseProgress";
 
 const TOUR_KEY = "ds_tour_done_v1";
 
 const TOUR_STEPS = [
-  { target: "evidence", title: "Delilleri oku", text: "Her kart bir delil. Aç, oku, önemli olanı iğnele." },
-  { target: "suspects", title: "Şüphelileri sorgula", text: "Birini seç ve istediğini sor. Çelişkileri yakala." },
-  { target: "objectives", title: "Görevini takip et", text: "Sıradaki adım, ipuçları ve notların burada." },
+  { target: "casefile", title: "Dosyayı oku", text: "Olayın hikâyesi burada. Komiserin brifingini dinleyebilirsin." },
+  { target: "evidence", title: "Delilleri incele", text: "Belgeler, fotoğraflar ve ses kayıtları. Önemli olanı iğnele." },
+  { target: "suspects", title: "Şüphelileri sorgula", text: "İstediğini sor ya da bir delili masaya koy. Çelişkileri yakala." },
+  { target: "objectives", title: "Görevini takip et", text: "Sıradaki adım, ipuçları ve notların hep burada." },
   { target: "accuse", title: "Suçluyu göster", text: "Hazır olduğunda suçla. İpucusuz çözüm 3 yıldız." },
 ];
+
+const EVIDENCE_TAG = /^\[Delil: ([^\]]+)\]\s*/;
 
 function readTourDone() {
   try {
@@ -36,21 +42,57 @@ function readTourDone() {
   }
 }
 
-function getNextStep({ seenCount, mediaCount, questionedCount, characterCount }) {
-  if (seenCount === 0) return "Önce olay özetini oku.";
-  if (seenCount < Math.min(3, mediaCount)) return "Delilleri okumaya devam et.";
+function getNextStep({ storyRead, seenCount, mediaCount, questionedCount, characterCount, presentedCount }) {
+  if (!storyRead) return "Önce vaka dosyasını oku.";
+  if (seenCount < Math.min(3, mediaCount)) return "Delilleri incelemeye başla.";
   if (questionedCount === 0) return "Bir şüpheliyi sorgula; ifadesini delillerle karşılaştır.";
-  if (seenCount < mediaCount) return "Okumadığın deliller var.";
+  if (presentedCount === 0) return "Bir şüpheliye delil göster ve tepkisini izle.";
+  if (seenCount < mediaCount) return "Bakmadığın deliller var.";
   if (questionedCount < characterCount) return "Herkesi dinlemeden karar verme.";
   return "Tablo netleşti. Hazırsan suçla.";
 }
 
-function EvidenceViewer({ item, index, total, pinned, onTogglePin, onPrev, onNext, onClose }) {
+function Paragraphs({ text }) {
+  return (text || "")
+    .split(/\n+/)
+    .filter(Boolean)
+    .map((paragraph, index) => <p key={index}>{paragraph}</p>);
+}
+
+function CaseFileViewer({ scenario, onBack }) {
   return (
-    <div className="inspector-panel">
-      <div className="inspector-head">
-        <button type="button" className="icon-btn" onClick={onClose} aria-label="Kapat">
-          <CloseIcon size={16} />
+    <div className="viewer">
+      <div className="viewer-head">
+        <button type="button" className="ds-btn ds-btn-ghost ds-btn-sm" onClick={onBack}>
+          <ArrowLeftIcon size={14} />
+          Pano
+        </button>
+      </div>
+      <article className="paper paper-story">
+        <span className="paper-type">
+          <ClipboardIcon size={14} />
+          Vaka dosyası
+        </span>
+        <h3>{scenario.title}</h3>
+        {scenario.briefing_audio_url ? (
+          <AudioPlayer src={scenario.briefing_audio_url} label="Komiserin brifingi" />
+        ) : null}
+        <Paragraphs text={scenario.story || scenario.description} />
+      </article>
+    </div>
+  );
+}
+
+function EvidenceViewer({ item, index, total, pinned, onTogglePin, onPrev, onNext, onBack }) {
+  const audio = isAudioUrl(item.media_url);
+  const [showTranscript, setShowTranscript] = useState(!audio);
+
+  return (
+    <div className="viewer">
+      <div className="viewer-head">
+        <button type="button" className="ds-btn ds-btn-ghost ds-btn-sm" onClick={onBack}>
+          <ArrowLeftIcon size={14} />
+          Pano
         </button>
         <span className="inspector-count">
           {index + 1}/{total}
@@ -67,14 +109,18 @@ function EvidenceViewer({ item, index, total, pinned, onTogglePin, onPrev, onNex
 
       <article className="paper">
         <span className="paper-type">
-          <EvidenceIcon type={item.type} size={14} />
+          <EvidenceIcon type={item.type} media={item.media_url} size={14} />
           {item.type || "Belge"}
         </span>
         <h3>{item.title}</h3>
         {item.description ? <p className="paper-lede">{item.description}</p> : null}
-        {(item.content || "").split("\n").filter(Boolean).map((paragraph, paragraphIndex) => (
-          <p key={paragraphIndex}>{paragraph}</p>
-        ))}
+        <MediaBlock url={item.media_url} title={item.title} label="Kaydı dinle" />
+        {audio ? (
+          <button type="button" className="link-btn transcript-toggle" onClick={() => setShowTranscript((value) => !value)}>
+            {showTranscript ? "Dökümü gizle" : "Dökümü göster"}
+          </button>
+        ) : null}
+        {showTranscript ? <Paragraphs text={item.content} /> : null}
       </article>
 
       <button
@@ -90,20 +136,39 @@ function EvidenceViewer({ item, index, total, pinned, onTogglePin, onPrev, onNex
   );
 }
 
+function ChatMessage({ message }) {
+  if (message.role !== "user") {
+    return <div className="bubble them">{message.content}</div>;
+  }
+  const match = message.content.match(EVIDENCE_TAG);
+  if (!match) return <div className="bubble me">{message.content}</div>;
+  return (
+    <div className="bubble me">
+      <span className="bubble-evidence">
+        <PinIcon size={12} filled />
+        {match[1]}
+      </span>
+      {message.content.replace(EVIDENCE_TAG, "")}
+    </div>
+  );
+}
+
 function InterrogationRoom({
   character,
   index,
   relations,
   conversation,
+  evidence,
   suspicion,
   onSuspicion,
   question,
   onQuestionChange,
   onAsk,
   loading,
-  onClose,
+  onBack,
 }) {
-  const [pendingQuestion, setPendingQuestion] = useState("");
+  const [pending, setPending] = useState(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const logRef = useRef(null);
   const askedSet = new Set(conversation.filter((m) => m.role === "user").map((m) => m.content));
   const prompts = (Array.isArray(character.question_prompts) ? character.question_prompts : []).filter(
@@ -112,21 +177,35 @@ function InterrogationRoom({
 
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
-  }, [conversation.length, pendingQuestion]);
+  }, [conversation.length, pending]);
 
-  async function ask(text) {
+  // Typewriter ticks while the suspect is "answering".
+  useEffect(() => {
+    if (!pending) return undefined;
+    const timer = window.setInterval(() => {
+      if (Math.random() < 0.7) playSfx("type");
+    }, 170);
+    return () => window.clearInterval(timer);
+  }, [pending]);
+
+  async function ask(text, evidenceItem) {
     const trimmed = (text ?? question).trim();
-    if (!trimmed || loading) return;
-    setPendingQuestion(trimmed);
-    await onAsk(null, character.id, trimmed);
-    setPendingQuestion("");
+    if ((!trimmed && !evidenceItem) || loading) return;
+    setPickerOpen(false);
+    playSfx(evidenceItem ? "pin" : "send");
+    setPending({
+      text: evidenceItem ? `[Delil: ${evidenceItem.title}] ${trimmed || "Bunu açıkla."}` : trimmed,
+    });
+    await onAsk(null, character.id, trimmed, evidenceItem?.id);
+    setPending(null);
   }
 
   return (
-    <div className="inspector-panel room">
-      <div className="inspector-head">
-        <button type="button" className="icon-btn" onClick={onClose} aria-label="Kapat">
-          <CloseIcon size={16} />
+    <div className="viewer room">
+      <div className="viewer-head">
+        <button type="button" className="ds-btn ds-btn-ghost ds-btn-sm" onClick={onBack}>
+          <ArrowLeftIcon size={14} />
+          Pano
         </button>
         <span className="inspector-count">Sorgu odası</span>
       </div>
@@ -167,17 +246,13 @@ function InterrogationRoom({
       </div>
 
       <div className="chat-log" ref={logRef} aria-live="polite">
-        {conversation.length === 0 && !pendingQuestion ? (
-          <p className="empty-line">İlk soruyu sor.</p>
-        ) : null}
+        {conversation.length === 0 && !pending ? <p className="empty-line">İlk soruyu sor ya da bir delil göster.</p> : null}
         {conversation.map((message, messageIndex) => (
-          <div key={messageIndex} className={`bubble ${message.role === "user" ? "me" : "them"}`}>
-            {message.content}
-          </div>
+          <ChatMessage key={messageIndex} message={message} />
         ))}
-        {pendingQuestion ? (
+        {pending ? (
           <>
-            <div className="bubble me">{pendingQuestion}</div>
+            <ChatMessage message={{ role: "user", content: pending.text }} />
             <div className="bubble them typing" aria-label="Yanıt bekleniyor">
               <span />
               <span />
@@ -187,11 +262,22 @@ function InterrogationRoom({
         ) : null}
       </div>
 
-      {prompts.length && !loading ? (
+      {prompts.length && !loading && !pickerOpen ? (
         <div className="prompt-chips">
           {prompts.slice(0, 3).map((prompt) => (
             <button key={prompt} type="button" className="prompt-chip" onClick={() => ask(prompt)}>
               {prompt}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {pickerOpen ? (
+        <div className="evidence-picker" role="listbox" aria-label="Gösterilecek delil">
+          {evidence.map((item) => (
+            <button key={item.id} type="button" role="option" aria-selected="false" onClick={() => ask(question, item)}>
+              <EvidenceIcon type={item.type} media={item.media_url} size={14} />
+              {item.title}
             </button>
           ))}
         </div>
@@ -204,6 +290,17 @@ function InterrogationRoom({
           ask();
         }}
       >
+        <button
+          type="button"
+          className={`ds-btn ds-btn-secondary present-btn ${pickerOpen ? "active" : ""}`}
+          onClick={() => setPickerOpen((open) => !open)}
+          disabled={loading || evidence.length === 0}
+          aria-expanded={pickerOpen}
+          title="Delil göster"
+        >
+          <PinIcon size={14} />
+          <span className="hide-mobile">Delil göster</span>
+        </button>
         <input
           value={question}
           onChange={(event) => onQuestionChange(event.target.value)}
@@ -225,8 +322,24 @@ function InterrogationRoom({
   );
 }
 
+function HintCard({ hint }) {
+  const media = hint.mediaUrl || hint.media_url;
+  return (
+    <div className="hint-card">
+      <LightbulbIcon size={14} />
+      <div className="hint-body">
+        {hint.title ? <strong>{hint.title}</strong> : null}
+        {media && isImageUrl(media) ? <MediaBlock url={media} title={hint.title} /> : null}
+        {media && isAudioUrl(media) ? <AudioPlayer src={media} label="Mesajı dinle" compact /> : null}
+        <p>{hint.content || hint.text}</p>
+      </div>
+    </div>
+  );
+}
+
 function Objectives({
   nextStep,
+  storyRead,
   seenCount,
   mediaCount,
   questionedCount,
@@ -242,6 +355,15 @@ function Objectives({
 }) {
   const [confirmHint, setConfirmHint] = useState(false);
   const hintsLeft = Math.max(0, MAX_HINTS - hints.length);
+  const tasks = [
+    { label: "Vaka dosyasını oku", done: storyRead },
+    { label: "Delilleri incele", done: seenCount >= mediaCount && mediaCount > 0, count: `${seenCount}/${mediaCount}` },
+    {
+      label: "Şüphelileri sorgula",
+      done: questionedCount >= characterCount && characterCount > 0,
+      count: `${questionedCount}/${characterCount}`,
+    },
+  ];
 
   return (
     <div className="inspector-panel objectives" data-tour="objectives">
@@ -251,22 +373,13 @@ function Objectives({
       </div>
 
       <ul className="checklist">
-        <li className={seenCount >= mediaCount && mediaCount > 0 ? "done" : ""}>
-          <span className="check">{seenCount >= mediaCount && mediaCount > 0 ? <CheckIcon size={12} /> : null}</span>
-          Delilleri incele
-          <em>
-            {seenCount}/{mediaCount}
-          </em>
-        </li>
-        <li className={questionedCount >= characterCount && characterCount > 0 ? "done" : ""}>
-          <span className="check">
-            {questionedCount >= characterCount && characterCount > 0 ? <CheckIcon size={12} /> : null}
-          </span>
-          Şüphelileri sorgula
-          <em>
-            {questionedCount}/{characterCount}
-          </em>
-        </li>
+        {tasks.map((task) => (
+          <li key={task.label} className={task.done ? "done" : ""}>
+            <span className="check">{task.done ? <CheckIcon size={12} /> : null}</span>
+            {task.label}
+            {task.count ? <em>{task.count}</em> : null}
+          </li>
+        ))}
         <li>
           <span className="check" />
           <button type="button" className="link-btn" onClick={onAccuse}>
@@ -281,10 +394,7 @@ function Objectives({
           <span>{hintsLeft} hak</span>
         </div>
         {hints.map((hint, hintIndex) => (
-          <div key={hint.id || hintIndex} className="hint-card">
-            <LightbulbIcon size={14} />
-            <p>{hint.content || hint.text}</p>
-          </div>
+          <HintCard key={hint.id || hintIndex} hint={hint} />
         ))}
         {hintsLeft > 0 ? (
           confirmHint ? (
@@ -296,6 +406,7 @@ function Objectives({
                 disabled={loading}
                 onClick={async () => {
                   await onUseHint();
+                  playSfx("hint");
                   setConfirmHint(false);
                 }}
               >
@@ -346,6 +457,31 @@ function Objectives({
   );
 }
 
+function EvidenceCard({ item, seen, pinned, onOpen }) {
+  const image = isImageUrl(item.media_url);
+  const audio = isAudioUrl(item.media_url);
+  return (
+    <button
+      type="button"
+      className={`evidence-card ${seen ? "seen" : "unseen"} ${image ? "has-photo" : ""}`}
+      onClick={onOpen}
+    >
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="evidence-thumb" src={item.media_url} alt="" loading="lazy" />
+      ) : null}
+      <span className="evidence-type">
+        <EvidenceIcon type={item.type} media={item.media_url} size={14} />
+        {item.type || "Belge"}
+      </span>
+      <strong>{item.title}</strong>
+      {audio ? <span className="evidence-wave" aria-hidden="true" /> : null}
+      {pinned ? <PinIcon size={14} filled className="evidence-pin" /> : null}
+      {!seen ? <span className="new-dot" aria-label="İncelenmedi" /> : null}
+    </button>
+  );
+}
+
 export default function Investigation({
   sessionId,
   scenario,
@@ -363,29 +499,47 @@ export default function Investigation({
   onExit,
 }) {
   const { progress, markSeen, togglePinned, setSuspicion, setNotes } = useCaseProgress(sessionId);
-  const [inspector, setInspector] = useState({ mode: "objectives", id: "" });
+  const [view, setView] = useState({ mode: "board", id: "" });
   const [tourOpen, setTourOpen] = useState(() => !readTourDone());
 
+  const storyRead = progress.seen.includes("story");
   const seenCount = media.filter((item) => progress.seen.includes(item.id)).length;
   const questionedIds = characters
     .filter((character) => (conversations[character.id] || []).length > 0)
     .map((character) => character.id);
+  const presentedCount = Object.values(conversations)
+    .flat()
+    .filter((message) => message.role === "user" && EVIDENCE_TAG.test(message.content)).length;
   const nextStep = getNextStep({
+    storyRead,
     seenCount,
     mediaCount: media.length,
     questionedCount: questionedIds.length,
     characterCount: characters.length,
+    presentedCount,
   });
 
-  const evidenceIndex = media.findIndex((item) => item.id === inspector.id);
-  const activeEvidence = inspector.mode === "evidence" ? media[evidenceIndex] : null;
-  const suspectIndex = characters.findIndex((character) => character.id === inspector.id);
-  const activeSuspect = inspector.mode === "suspect" ? characters[suspectIndex] : null;
-  const sheetOpen = Boolean(activeEvidence || activeSuspect);
+  // Each viewer starts at the top of the page instead of the board's scroll position.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [view.mode, view.id]);
+
+  const evidenceIndex = media.findIndex((item) => item.id === view.id);
+  const activeEvidence = view.mode === "evidence" ? media[evidenceIndex] : null;
+  const suspectIndex = characters.findIndex((character) => character.id === view.id);
+  const activeSuspect = view.mode === "suspect" ? characters[suspectIndex] : null;
+  const viewerOpen = view.mode !== "board";
+
+  function openStory() {
+    markSeen("story");
+    playSfx("paper");
+    setView({ mode: "story", id: "" });
+  }
 
   function openEvidence(id) {
     markSeen(id);
-    setInspector({ mode: "evidence", id });
+    playSfx("paper");
+    setView({ mode: "evidence", id });
   }
 
   function stepEvidence(delta) {
@@ -394,12 +548,13 @@ export default function Investigation({
     openEvidence(media[nextIndex].id);
   }
 
-  function openSuspect(id) {
-    setInspector({ mode: "suspect", id });
+  function backToBoard() {
+    setView({ mode: "board", id: "" });
   }
 
-  function closeInspector() {
-    setInspector({ mode: "objectives", id: "" });
+  function openTour() {
+    backToBoard();
+    setTourOpen(true);
   }
 
   function finishTour() {
@@ -424,88 +579,41 @@ export default function Investigation({
             {hints.length}/{MAX_HINTS}
           </span>
         </div>
-        <button type="button" className="icon-btn" onClick={() => setTourOpen(true)} aria-label="Nasıl oynanır">
+        <button type="button" className="icon-btn" onClick={openTour} aria-label="Nasıl oynanır">
           <HelpCircleIcon size={16} />
         </button>
-        <button type="button" className="ds-btn ds-btn-primary accuse-btn" onClick={onAccuse} data-tour="accuse">
+        <button
+          type="button"
+          className="ds-btn ds-btn-primary accuse-btn"
+          onClick={() => {
+            playSfx("accuse");
+            onAccuse();
+          }}
+          data-tour="accuse"
+        >
           <TargetIcon size={14} />
           Suçla
         </button>
       </header>
 
       <div className="workspace">
-        <div className="board">
-          <div className="next-step mobile-next">
-            <TargetIcon size={16} />
-            <p>{nextStep}</p>
-          </div>
-
-          <section data-tour="suspects" aria-label="Şüpheliler">
-            <div className="section-head">
-              <h2>Şüpheliler</h2>
-            </div>
-            <div className="lineup lineup-board">
-              {characters.map((character, index) => (
-                <button
-                  key={character.id}
-                  type="button"
-                  className={`lineup-btn ${activeSuspect?.id === character.id ? "active" : ""}`}
-                  onClick={() => openSuspect(character.id)}
-                >
-                  <Mugshot
-                    character={character}
-                    index={index}
-                    suspicion={progress.suspicion[character.id] || 0}
-                    done={questionedIds.includes(character.id)}
-                  />
-                  <SuspicionDots level={progress.suspicion[character.id] || 0} />
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section data-tour="evidence" aria-label="Deliller">
-            <div className="section-head">
-              <h2>Deliller</h2>
-            </div>
-            <div className="evidence-grid">
-              {media.map((item) => {
-                const seen = progress.seen.includes(item.id);
-                const pinned = progress.pinned.includes(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`evidence-card ${seen ? "seen" : "unseen"} ${
-                      activeEvidence?.id === item.id ? "active" : ""
-                    }`}
-                    onClick={() => openEvidence(item.id)}
-                  >
-                    <span className="evidence-type">
-                      <EvidenceIcon type={item.type} size={14} />
-                      {item.type || "Belge"}
-                    </span>
-                    <strong>{item.title}</strong>
-                    {pinned ? <PinIcon size={14} filled className="evidence-pin" /> : null}
-                    {!seen ? <span className="new-dot" aria-label="Okunmadı" /> : null}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        </div>
-
-        <aside className={`inspector ${sheetOpen ? "sheet-open" : ""}`}>
-          {activeEvidence ? (
+        <main className={`stage ${viewerOpen ? "viewer-open" : ""}`}>
+          {view.mode === "story" ? (
+            <CaseFileViewer scenario={scenario} onBack={backToBoard} />
+          ) : activeEvidence ? (
             <EvidenceViewer
+              key={activeEvidence.id}
               item={activeEvidence}
               index={evidenceIndex}
               total={media.length}
               pinned={progress.pinned.includes(activeEvidence.id)}
-              onTogglePin={() => togglePinned(activeEvidence.id)}
+              onTogglePin={() => {
+                playSfx("pin");
+                togglePinned(activeEvidence.id);
+              }}
               onPrev={() => stepEvidence(-1)}
               onNext={() => stepEvidence(1)}
-              onClose={closeInspector}
+              onBack={backToBoard}
             />
           ) : activeSuspect ? (
             <InterrogationRoom
@@ -514,33 +622,100 @@ export default function Investigation({
               index={suspectIndex}
               relations={relationsByCharacter[activeSuspect.id] || []}
               conversation={conversations[activeSuspect.id] || []}
+              evidence={media}
               suspicion={progress.suspicion[activeSuspect.id] || 0}
               onSuspicion={(level) => setSuspicion(activeSuspect.id, level)}
               question={question}
               onQuestionChange={onQuestionChange}
               onAsk={onAsk}
               loading={loading}
-              onClose={closeInspector}
+              onBack={backToBoard}
             />
           ) : null}
 
-          <div className={sheetOpen ? "objectives-wrap hidden-when-sheet" : "objectives-wrap"}>
-            <Objectives
-              nextStep={nextStep}
-              seenCount={seenCount}
-              mediaCount={media.length}
-              questionedCount={questionedIds.length}
-              characterCount={characters.length}
-              hints={hints}
-              onUseHint={onUseHint}
-              loading={loading}
-              notes={progress.notes}
-              onNotes={setNotes}
-              pinnedItems={media.filter((item) => progress.pinned.includes(item.id))}
-              onOpenEvidence={openEvidence}
-              onAccuse={onAccuse}
-            />
+          <div className="board">
+            <div className="next-step mobile-next">
+              <TargetIcon size={16} />
+              <p>{nextStep}</p>
+            </div>
+
+            <button
+              type="button"
+              className={`casefile-card ${storyRead ? "seen" : ""}`}
+              onClick={openStory}
+              data-tour="casefile"
+            >
+              <FileTextIcon size={18} />
+              <span>
+                <strong>Vaka dosyası</strong>
+                <small>{scenario.briefing_audio_url ? "Olayın hikâyesi ve komiserin brifingi" : "Olayın hikâyesi"}</small>
+              </span>
+              {!storyRead ? <span className="new-dot" aria-label="Okunmadı" /> : null}
+            </button>
+
+            <section data-tour="suspects" aria-label="Şüpheliler">
+              <div className="section-head">
+                <h2>Şüpheliler</h2>
+              </div>
+              <div className="lineup lineup-board">
+                {characters.map((character, index) => (
+                  <button
+                    key={character.id}
+                    type="button"
+                    className="lineup-btn"
+                    onClick={() => setView({ mode: "suspect", id: character.id })}
+                  >
+                    <Mugshot
+                      character={character}
+                      index={index}
+                      suspicion={progress.suspicion[character.id] || 0}
+                      done={questionedIds.includes(character.id)}
+                    />
+                    <SuspicionDots level={progress.suspicion[character.id] || 0} />
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section data-tour="evidence" aria-label="Deliller">
+              <div className="section-head">
+                <h2>Deliller</h2>
+                <span>
+                  {seenCount}/{media.length}
+                </span>
+              </div>
+              <div className="evidence-grid">
+                {media.map((item) => (
+                  <EvidenceCard
+                    key={item.id}
+                    item={item}
+                    seen={progress.seen.includes(item.id)}
+                    pinned={progress.pinned.includes(item.id)}
+                    onOpen={() => openEvidence(item.id)}
+                  />
+                ))}
+              </div>
+            </section>
           </div>
+        </main>
+
+        <aside className="inspector">
+          <Objectives
+            nextStep={nextStep}
+            storyRead={storyRead}
+            seenCount={seenCount}
+            mediaCount={media.length}
+            questionedCount={questionedIds.length}
+            characterCount={characters.length}
+            hints={hints}
+            onUseHint={onUseHint}
+            loading={loading}
+            notes={progress.notes}
+            onNotes={setNotes}
+            pinnedItems={media.filter((item) => progress.pinned.includes(item.id))}
+            onOpenEvidence={openEvidence}
+            onAccuse={onAccuse}
+          />
         </aside>
       </div>
 

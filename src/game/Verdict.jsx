@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowLeftIcon, ArrowRightIcon, PenIcon, PinIcon, TargetIcon } from "../components/icons";
+import { playSfx } from "./audio/soundscape";
 import { CareerBar } from "./Lobby";
 import { Mugshot, SuspicionDots, Stars } from "./pieces";
 import { useCaseProgress } from "./useCaseProgress";
@@ -164,6 +165,11 @@ export function Result({ result, characters, sessionHistory, hasNext, onNext, on
   const score = useCountUp(Number(result?.score || 0));
   const culpritIds = (result?.correctGuiltyPlayers || []).map((item) => item.id);
   const culprits = characters.filter((character) => culpritIds.includes(character.id));
+
+  useEffect(() => {
+    playSfx("stamp");
+    playSfx(culpritMatch ? "success" : "fail");
+  }, [culpritMatch]);
 
   const verdict = isCorrect ? "Vaka çözüldü" : culpritMatch ? "Doğru kişi, zayıf gerekçe" : "Yanlış suçlama";
   const tone = isCorrect ? "win" : culpritMatch ? "partial" : "lose";

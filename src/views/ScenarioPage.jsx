@@ -18,7 +18,6 @@ export default function ScenarioPage({
   sessionId = "",
   onScenarioSelect,
   sessionHistory = [],
-  onResumeSession,
   onStartSession,
   sessionActive = false,
   conversations = {},
@@ -50,6 +49,14 @@ export default function ScenarioPage({
     );
   }, [scenarios, sessionHistory, selectedScenario, lockedScenarioIds]);
 
+  const activeSessionForCase = useMemo(
+    () =>
+      (sessionHistory || []).find(
+        (item) => item?.status === "continues" && item?.scenario?.id === selectedScenario?.id
+      ) || null,
+    [sessionHistory, selectedScenario]
+  );
+
   function goLobby() {
     setAccusing(false);
     onReset();
@@ -62,7 +69,6 @@ export default function ScenarioPage({
         lockedScenarioIds={lockedScenarioIds}
         sessionHistory={sessionHistory}
         onSelectScenario={onScenarioSelect}
-        onResumeSession={onResumeSession}
         loading={scenarioLoading}
       />
     );
@@ -93,6 +99,7 @@ export default function ScenarioPage({
         loading={scenarioLoading}
         locked={lockedScenarioIds.includes(selectedScenario.id)}
         starting={actionLoading}
+        activeSession={activeSessionForCase}
         onStart={onStartSession}
         onBack={goLobby}
       />

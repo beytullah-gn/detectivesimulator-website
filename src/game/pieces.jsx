@@ -6,6 +6,7 @@ import {
   ClipboardIcon,
   ClockIcon,
   FileTextIcon,
+  MicIcon,
   StarIcon,
 } from "../components/icons";
 import { formatCharacterName, getInitials } from "../utils/formatters";
@@ -59,7 +60,8 @@ export function SuspicionDots({ level = 0 }) {
   );
 }
 
-export function EvidenceIcon({ type = "", size = 16 }) {
+export function EvidenceIcon({ type = "", media = "", size = 16 }) {
+  if (/\.(mp3|m4a|ogg|wav)$/i.test(media)) return <MicIcon size={size} />;
   const normalized = type.toLocaleLowerCase("tr-TR");
   if (normalized.includes("kamera") || normalized.includes("foto")) return <CameraIcon size={size} />;
   if (normalized.includes("zaman")) return <ClockIcon size={size} />;
