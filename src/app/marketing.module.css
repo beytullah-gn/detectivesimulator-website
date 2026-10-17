@@ -1240,3 +1240,128 @@
 .policyList li {
   margin-bottom: 8px;
 }
+
+/* SEO landing and footer */
+.seoSteps {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seoSteps li {
+  display: flex;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+}
+
+.seoSteps b {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+  color: var(--ds-accent);
+}
+
+.seoSteps h3,
+.seoFeatures h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.seoSteps p,
+.seoFeatures p,
+.seoFaq p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ds-text-muted);
+}
+
+.seoFeatures {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.seoFeatures article {
+  padding: 14px 16px;
+  border: 1px solid var(--ds-border);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-surface);
+}
+
+.seoFaq {
+  display: flex;
+  flex-direction: column;
+  max-width: 760px;
+  border-top: 1px solid var(--ds-border);
+}
+
+.seoFaq details {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--ds-border);
+}
+
+.seoFaq summary {
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seoFaq details p {
+  margin-top: 8px;
+}
+
+.seoCta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 32px;
+  padding: 20px;
+  border: 1px solid var(--ds-folder-edge);
+  border-radius: var(--ds-radius-lg);
+  background: var(--ds-folder);
+  color: var(--ds-folder-text);
+}
+
+.seoCta h2 {
+  margin: 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 18px;
+}
+
+.siteFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 48px;
+  padding: 24px 0 8px;
+  border-top: 1px solid var(--ds-border);
+}
+
+.siteFooter nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.siteFooter nav a {
+  font-size: 13px;
+  color: var(--ds-text-muted);
+}
+
+.siteFooter nav a:hover {
+  color: var(--ds-text);
+}
+
+.siteFooter small {
+  font-size: 12px;
+  color: var(--ds-text-muted);
+}

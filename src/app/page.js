@@ -3,7 +3,9 @@ import styles from "./marketing.module.css";
 import CaseArtwork from "@/components/marketing/CaseArtwork";
 import CaseGrid from "@/components/marketing/CaseGrid";
 import MarketingHeader from "@/components/marketing/MarketingHeader";
+import SiteFooter from "@/components/marketing/SiteFooter";
 import { createSocialImages, getScenarioCoverUrl } from "@/lib/content";
+import { JsonLd, OG_IMAGE, SITE_DESCRIPTION, SITE_KEYWORDS, gameJsonLd, websiteJsonLd } from "@/lib/seo";
 import { getPublishedScenarios } from "@/lib/content-api";
 
 export const revalidate = 120;
@@ -15,11 +17,13 @@ export async function generateMetadata() {
     sort: "-popularity_score,title",
     limit: 1,
   });
-  const socialImage = getScenarioCoverUrl(featuredScenario);
+  const socialImage = getScenarioCoverUrl(featuredScenario) || OG_IMAGE;
 
   return {
-    description:
-      "Vaka seçtiğin, delilleri incelediğin, şüphelileri sorguladığın ve final kararını verdiğin interaktif dedektif oyunu.",
+    title: { absolute: "Detective Simulator — Yapay Zekâlı Türkçe Dedektif Oyunu" },
+    keywords: SITE_KEYWORDS,
+    alternates: { canonical: "/" },
+    description: SITE_DESCRIPTION,
     openGraph: {
       images: createSocialImages(
         socialImage,
@@ -44,6 +48,8 @@ export default async function HomePage() {
 
   return (
     <div className={styles.page}>
+      <JsonLd data={websiteJsonLd()} />
+      <JsonLd data={gameJsonLd()} />
       <div className={styles.shell}>
         <MarketingHeader active="home" />
 
@@ -85,6 +91,8 @@ export default async function HomePage() {
             <CaseGrid scenarios={scenarios} />
           </section>
         </main>
+
+        <SiteFooter />
       </div>
     </div>
   );

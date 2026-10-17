@@ -2,6 +2,7 @@ import Link from "next/link";
 import styles from "../marketing.module.css";
 import CaseGrid from "@/components/marketing/CaseGrid";
 import MarketingHeader from "@/components/marketing/MarketingHeader";
+import SiteFooter from "@/components/marketing/SiteFooter";
 import { createSocialImages, DEFAULT_SOCIAL_IMAGE } from "@/lib/content";
 import {
   getPublishedScenarioCategories,
@@ -12,6 +13,7 @@ export const revalidate = 120;
 
 export const metadata = {
   title: "Vaka Kataloğu",
+  alternates: { canonical: "/cases" },
   description:
     "Detective Simulator içindeki tüm yayınlanmış vakaları, delil dosyalarını ve şüpheli listelerini inceleyin.",
   openGraph: {
@@ -69,6 +71,8 @@ export default async function CasesIndexPage() {
             <CaseGrid scenarios={scenarios} />
           </section>
         </main>
+
+        <SiteFooter />
       </div>
     </div>
   );

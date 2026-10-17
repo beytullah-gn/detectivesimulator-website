@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import styles from "../../../marketing.module.css";
 import CaseGrid from "@/components/marketing/CaseGrid";
 import MarketingHeader from "@/components/marketing/MarketingHeader";
+import SiteFooter from "@/components/marketing/SiteFooter";
 import {
   createSocialImages,
   DEFAULT_SOCIAL_IMAGE,
@@ -55,6 +56,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
+    alternates: { canonical: `/cases/category/${category.slug}` },
     openGraph: {
       title,
       description,
@@ -120,6 +122,8 @@ export default async function CaseCategoryPage({ params }) {
             </section>
           ) : null}
         </main>
+
+        <SiteFooter />
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import CaseGrid from "@/components/marketing/CaseGrid";
 import { Mugshot } from "@/game/pieces";
 import { formatDifficulty, formatDuration, getDifficultyKey } from "@/utils/formatters";
 import MarketingHeader from "@/components/marketing/MarketingHeader";
+import SiteFooter from "@/components/marketing/SiteFooter";
 import {
   createSocialImages,
   DEFAULT_SOCIAL_IMAGE,
@@ -41,8 +42,9 @@ export async function generateMetadata({ params }) {
   const socialImage = getScenarioCoverUrl(scenario) || DEFAULT_SOCIAL_IMAGE;
 
   return {
-    title: scenario.title,
+    title: `${scenario.title} — Dedektif Vakası`,
     description,
+    alternates: { canonical: `/cases/${scenario.slug}` },
     openGraph: {
       title: scenario.title,
       description,
@@ -149,6 +151,8 @@ export default async function CaseDetailPage({ params }) {
             </section>
           ) : null}
         </main>
+
+        <SiteFooter />
       </div>
     </div>
   );

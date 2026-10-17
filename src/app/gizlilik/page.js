@@ -1,8 +1,10 @@
 import styles from "../marketing.module.css";
 import MarketingHeader from "@/components/marketing/MarketingHeader";
+import SiteFooter from "@/components/marketing/SiteFooter";
 
 export const metadata = {
   title: "Gizlilik Politikası",
+  alternates: { canonical: "/gizlilik" },
   description: "Detective Simulator'ın hangi verileri topladığı ve nasıl kullandığı.",
 };
 
@@ -67,6 +69,8 @@ export default function PrivacyPage() {
             </section>
           ))}
         </main>
+
+        <SiteFooter />
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ export const PUBLIC_CONTENT_BASE_URL = publicBaseUrl;
 // Real case photos live in public/case-photos/<slug>.jpg; list a slug here once its photo is added.
 const CASE_PHOTO_SLUGS = new Set([]);
 
-export const DEFAULT_SOCIAL_IMAGE = null;
+export const DEFAULT_SOCIAL_IMAGE = "/og.jpg";
 
 export function getCasePhotoUrl(scenario) {
   return scenario?.slug && CASE_PHOTO_SLUGS.has(scenario.slug)
@@ -16,7 +16,7 @@ export function getCasePhotoUrl(scenario) {
 }
 
 export function getScenarioCoverUrl(scenario) {
-  return getCasePhotoUrl(scenario);
+  return getCasePhotoUrl(scenario) || DEFAULT_SOCIAL_IMAGE;
 }
 
 export function getCaseNumber(scenario) {

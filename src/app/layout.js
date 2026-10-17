@@ -1,5 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { OG_IMAGE, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,8 +20,17 @@ export const metadata = {
     default: "Detective Simulator",
     template: "%s | Detective Simulator",
   },
-  description:
-    "Delilleri inceleyip şüphelileri sorguladığın interaktif dedektif oyunu.",
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: SITE_KEYWORDS,
+  openGraph: {
+    siteName: SITE_NAME,
+    locale: "tr_TR",
+    type: "website",
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: "Detective Simulator — dedektif oyunu" }],
+  },
+  twitter: { card: "summary_large_image", images: [OG_IMAGE] },
+  robots: { index: true, follow: true, "max-image-preview": "large" },
 };
 
 const themeInitScript = `

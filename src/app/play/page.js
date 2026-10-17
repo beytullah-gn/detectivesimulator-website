@@ -3,6 +3,7 @@ import { createSocialImages, DEFAULT_SOCIAL_IMAGE } from "@/lib/content";
 
 export const metadata = {
   title: "Oyunu Oyna",
+  alternates: { canonical: "/play" },
   description:
     "Detective Simulator içinde senaryoyu seç, şüphelileri sorgula ve final kararını ver.",
   openGraph: {
