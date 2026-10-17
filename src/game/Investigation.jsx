@@ -10,6 +10,7 @@ import {
   FileTextIcon,
   HelpCircleIcon,
   LightbulbIcon,
+  MicIcon,
   PinIcon,
   SendIcon,
   TargetIcon,
@@ -169,6 +170,7 @@ function InterrogationRoom({
 }) {
   const [pending, setPending] = useState(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [silent, setSilent] = useState(false);
   const logRef = useRef(null);
   const askedSet = new Set(conversation.filter((m) => m.role === "user").map((m) => m.content));
   const prompts = (Array.isArray(character.question_prompts) ? character.question_prompts : []).filter(
@@ -196,8 +198,13 @@ function InterrogationRoom({
     setPending({
       text: evidenceItem ? `[Delil: ${evidenceItem.title}] ${trimmed || "Bunu açıkla."}` : trimmed,
     });
-    await onAsk(null, character.id, trimmed, evidenceItem?.id);
+    setSilent(false);
+    const answered = await onAsk(null, character.id, trimmed, evidenceItem?.id);
     setPending(null);
+    if (answered === false) {
+      playSfx("error");
+      setSilent(true);
+    }
   }
 
   return (
@@ -238,7 +245,10 @@ function InterrogationRoom({
             role="radio"
             aria-checked={suspicion === level}
             className={suspicion === level ? "active" : ""}
-            onClick={() => onSuspicion(level)}
+            onClick={() => {
+              playSfx(level === 2 ? "pin" : "click");
+              onSuspicion(level);
+            }}
           >
             {label}
           </button>
@@ -250,6 +260,9 @@ function InterrogationRoom({
         {conversation.map((message, messageIndex) => (
           <ChatMessage key={messageIndex} message={message} />
         ))}
+        {silent && !pending ? (
+          <p className="room-silent">{character.name || "Şüpheli"} şu an konuşmuyor. Biraz sonra tekrar dene.</p>
+        ) : null}
         {pending ? (
           <>
             <ChatMessage message={{ role: "user", content: pending.text }} />
@@ -293,7 +306,10 @@ function InterrogationRoom({
         <button
           type="button"
           className={`ds-btn ds-btn-secondary present-btn ${pickerOpen ? "active" : ""}`}
-          onClick={() => setPickerOpen((open) => !open)}
+          onClick={() => {
+            playSfx("click");
+            setPickerOpen((open) => !open);
+          }}
           disabled={loading || evidence.length === 0}
           aria-expanded={pickerOpen}
           title="Delil göster"
@@ -417,7 +433,14 @@ function Objectives({
               </button>
             </div>
           ) : (
-            <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setConfirmHint(true)}>
+            <button
+              type="button"
+              className="ds-btn ds-btn-secondary ds-btn-sm"
+              onClick={() => {
+                playSfx("click");
+                setConfirmHint(true);
+              }}
+            >
               <LightbulbIcon size={14} />
               İpucu al
             </button>
@@ -499,7 +522,10 @@ export default function Investigation({
   onExit,
 }) {
   const { progress, markSeen, togglePinned, setSuspicion, setNotes } = useCaseProgress(sessionId);
-  const [view, setView] = useState({ mode: "board", id: "" });
+  // A fresh investigation opens on the case file so the story is the first thing the player sees.
+  const [view, setView] = useState(() =>
+    progress.seen.includes("story") ? { mode: "board", id: "" } : { mode: "story", id: "" }
+  );
   const [tourOpen, setTourOpen] = useState(() => !readTourDone());
 
   const storyRead = progress.seen.includes("story");
@@ -530,6 +556,11 @@ export default function Investigation({
   const activeSuspect = view.mode === "suspect" ? characters[suspectIndex] : null;
   const viewerOpen = view.mode !== "board";
 
+  useEffect(() => {
+    if (view.mode === "story") markSeen("story");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.mode]);
+
   function openStory() {
     markSeen("story");
     playSfx("paper");
@@ -549,6 +580,7 @@ export default function Investigation({
   }
 
   function backToBoard() {
+    if (view.mode !== "board") playSfx("back");
     setView({ mode: "board", id: "" });
   }
 
@@ -569,7 +601,19 @@ export default function Investigation({
   return (
     <div className="investigation">
       <header className="hud">
-        <button type="button" className="icon-btn" onClick={onExit} aria-label="Dosyalara dön">
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={() => {
+            if (viewerOpen) {
+              backToBoard();
+            } else {
+              onExit();
+            }
+          }}
+          aria-label={viewerOpen ? "Panoya dön" : "Dosyalara dön"}
+          title={viewerOpen ? "Panoya dön" : "Dosyalara dön"}
+        >
           <ArrowLeftIcon size={16} />
         </button>
         <div className="hud-title">
@@ -641,16 +685,20 @@ export default function Investigation({
 
             <button
               type="button"
-              className={`casefile-card ${storyRead ? "seen" : ""}`}
+              className={`casefile-card ${storyRead ? "seen" : "unread"}`}
               onClick={openStory}
               data-tour="casefile"
             >
-              <FileTextIcon size={18} />
-              <span>
-                <strong>Vaka dosyası</strong>
-                <small>{scenario.briefing_audio_url ? "Olayın hikâyesi ve komiserin brifingi" : "Olayın hikâyesi"}</small>
+              <span className="casefile-tab">Vaka dosyası</span>
+              <span className="casefile-body">
+                <strong>{scenario.title}</strong>
+                <small>{scenario.teaser || scenario.description}</small>
               </span>
-              {!storyRead ? <span className="new-dot" aria-label="Okunmadı" /> : null}
+              <span className="casefile-cta">
+                {scenario.briefing_audio_url ? <MicIcon size={14} /> : <FileTextIcon size={14} />}
+                {storyRead ? "Tekrar oku" : "Dosyayı aç"}
+              </span>
+              {!storyRead ? <span className="casefile-ribbon">Yeni</span> : null}
             </button>
 
             <section data-tour="suspects" aria-label="Şüpheliler">
@@ -663,7 +711,10 @@ export default function Investigation({
                     key={character.id}
                     type="button"
                     className="lineup-btn"
-                    onClick={() => setView({ mode: "suspect", id: character.id })}
+                    onClick={() => {
+                      playSfx("open");
+                      setView({ mode: "suspect", id: character.id });
+                    }}
                   >
                     <Mugshot
                       character={character}
@@ -719,7 +770,7 @@ export default function Investigation({
         </aside>
       </div>
 
-      {tourOpen ? <CoachTour steps={TOUR_STEPS} onDone={finishTour} /> : null}
+      {tourOpen && !viewerOpen ? <CoachTour steps={TOUR_STEPS} onDone={finishTour} /> : null}
     </div>
   );
 }

@@ -326,20 +326,20 @@ export function useDetectiveGame() {
 
     if (!trimmedQuestion && !evidenceId) {
       setErrorMessage("Lütfen bir soru yazın.");
-      return;
+      return false;
     }
 
     if (!targetCharacterId) {
       setErrorMessage("Lütfen bir şüpheli seçin.");
-      return;
+      return false;
     }
 
     if (!session?.sessionId) {
       setErrorMessage("Oturum bulunamadı. Önce soruşturmayı başlatın.");
-      return;
+      return false;
     }
 
-    if (isSessionCompleted) return;
+    if (isSessionCompleted) return false;
 
     setActionLoading(true);
     setErrorMessage("");
@@ -368,10 +368,12 @@ export function useDetectiveGame() {
           ],
         };
       });
+      return true;
     } catch (currentError) {
       // Keep the question so the player does not lose it
       if (!evidenceId) setQuestion(trimmedQuestion);
       handleApiError(currentError, "Interrogation error");
+      return false;
     } finally {
       setActionLoading(false);
     }

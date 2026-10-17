@@ -1,5 +1,5 @@
 import { getCasePhotoUrl, getCaseNumber } from "@/lib/content";
-import { formatDifficulty } from "@/utils/formatters";
+import { formatDifficulty, getDifficultyKey } from "@/utils/formatters";
 import "./dossier.css";
 
 // Case cover drawn as a stamped manila folder; a photo (if provided) is clipped on as a polaroid.
@@ -17,7 +17,9 @@ export default function CaseArtwork({ scenario, className = "", stamp = "" }) {
       <div className="dossier-body">
         <span className="dossier-category">{categoryTitle}</span>
         <strong className="dossier-title">{scenario?.title}</strong>
-        <span className="dossier-meta">{formatDifficulty(scenario?.difficulty)}</span>
+        <span className={`difficulty difficulty-${getDifficultyKey(scenario?.difficulty)}`}>
+          {formatDifficulty(scenario?.difficulty)}
+        </span>
         <span className="dossier-stamp">{stamp || "Gizli"}</span>
       </div>
       {photoUrl ? (

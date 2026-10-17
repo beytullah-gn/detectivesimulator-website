@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { CloseIcon, PlayIcon } from "../components/icons";
-import { getSoundscape, readSoundSettings } from "./audio/soundscape";
+import { getSoundscape, playSfx, readSoundSettings } from "./audio/soundscape";
 
 export const isAudioUrl = (url = "") => /\.(mp3|m4a|ogg|wav)(\?|$)/i.test(url);
 export const isImageUrl = (url = "") => /\.(jpe?g|png|webp|gif|avif)(\?|$)/i.test(url);
@@ -43,6 +43,7 @@ export function AudioPlayer({ src, label = "Kaydı dinle", compact = false }) {
     if (!audio) return;
     if (audio.paused) {
       getSoundscape().unlock();
+      playSfx("tape");
       audio.play().catch((error) => console.error("Audio play error:", error));
     } else {
       audio.pause();
@@ -104,7 +105,15 @@ export function EvidenceImage({ src, alt }) {
 
   return (
     <>
-      <button type="button" className="evidence-photo" onClick={() => setOpen(true)} aria-label={`${alt} büyüt`}>
+      <button
+        type="button"
+        className="evidence-photo"
+        onClick={() => {
+          playSfx("shutter");
+          setOpen(true);
+        }}
+        aria-label={`${alt} büyüt`}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt} loading="lazy" />
       </button>

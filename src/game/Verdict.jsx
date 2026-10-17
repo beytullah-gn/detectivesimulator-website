@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowLeftIcon, ArrowRightIcon, PenIcon, PinIcon, TargetIcon } from "../components/icons";
 import { playSfx } from "./audio/soundscape";
+import { getRank, summarizeCareer } from "./career";
 import { CareerBar } from "./Lobby";
 import { Mugshot, SuspicionDots, Stars } from "./pieces";
 import { useCaseProgress } from "./useCaseProgress";
@@ -142,19 +143,32 @@ function FeedbackText({ text }) {
   );
 }
 
-function useCountUp(target, duration = 900) {
+function useCountUp(target, duration = 900, delay = 600) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     let frame;
-    const start = performance.now();
+    let start = 0;
+    let lastStep = 0;
     function tick(now) {
+      if (!start) start = now;
       const ratio = Math.min(1, (now - start) / duration);
-      setValue(Math.round(target * (1 - Math.pow(1 - ratio, 3))));
+      const next = Math.round(target * (1 - Math.pow(1 - ratio, 3)));
+      // A counter tick for every 50 points gives the score a mechanical roll.
+      if (Math.floor(next / 50) > lastStep) {
+        lastStep = Math.floor(next / 50);
+        playSfx("tick");
+      }
+      setValue(next);
       if (ratio < 1) frame = requestAnimationFrame(tick);
     }
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [target, duration]);
+    const timer = window.setTimeout(() => {
+      frame = requestAnimationFrame(tick);
+    }, delay);
+    return () => {
+      window.clearTimeout(timer);
+      cancelAnimationFrame(frame);
+    };
+  }, [target, duration, delay]);
   return value;
 }
 
@@ -166,10 +180,19 @@ export function Result({ result, characters, sessionHistory, hasNext, onNext, on
   const culpritIds = (result?.correctGuiltyPlayers || []).map((item) => item.id);
   const culprits = characters.filter((character) => culpritIds.includes(character.id));
 
+  const career = summarizeCareer(sessionHistory);
+  const previousRank = getRank(Math.max(0, career.totalScore - Number(result?.score || 0))).current;
+  const rankedUp = isCorrect && previousRank.title !== career.rank.current.title;
+
   useEffect(() => {
     playSfx("stamp");
     playSfx(culpritMatch ? "success" : "fail");
-  }, [culpritMatch]);
+    const timers = Array.from({ length: stars }, (_, index) =>
+      window.setTimeout(() => playSfx("star", index), 1700 + index * 260)
+    );
+    if (rankedUp) timers.push(window.setTimeout(() => playSfx("rankup"), 2600));
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [culpritMatch, stars, rankedUp]);
 
   const verdict = isCorrect ? "Vaka çözüldü" : culpritMatch ? "Doğru kişi, zayıf gerekçe" : "Yanlış suçlama";
   const tone = isCorrect ? "win" : culpritMatch ? "partial" : "lose";
@@ -179,6 +202,7 @@ export function Result({ result, characters, sessionHistory, hasNext, onNext, on
       <div className={`verdict verdict-${tone}`}>
         <span className="verdict-stamp">{verdict}</span>
         <Stars count={stars} size={28} className="verdict-stars" />
+        {rankedUp ? <span className="rank-up">Yeni rütbe: {career.rank.current.title}</span> : null}
         <div className="verdict-score">
           <strong>+{score}</strong>
           <span>puan</span>

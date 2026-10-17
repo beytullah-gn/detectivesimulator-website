@@ -71,7 +71,7 @@ They are generated from code, so they can be re-rendered after a story change:
 
 ```bash
 node scripts/case-media/render-images.cjs   # HTML templates -> JPEG (Playwright)
-node scripts/case-media/render-audio.cjs    # macOS `say` (Yelda) + ffmpeg effects -> MP3
+EDGE_TTS_BIN=/path/to/edge-tts node scripts/case-media/render-audio.cjs   # Microsoft neural Turkish voices (edge-tts) + ffmpeg effects -> MP3
 ```
 
 `scripts/case-media/images.cjs` and `audio.cjs` hold the content; paths must match the `media_url`

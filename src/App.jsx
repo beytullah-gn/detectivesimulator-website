@@ -7,7 +7,7 @@ import AlertMessage from "./components/AlertMessage";
 import AuthPanel from "./components/AuthPanel";
 import ScenarioPage from "./views/ScenarioPage";
 import { useEffect } from "react";
-import { getSoundscape } from "./game/audio/soundscape";
+import { getSoundscape, playSfx } from "./game/audio/soundscape";
 import { VIEW, useDetectiveGame } from "./hooks/useDetectiveGame";
 
 function App() {
@@ -51,6 +51,10 @@ function App() {
   } = useDetectiveGame();
 
   const caseTitle = selectedScenario?.title || pendingScenarioTitle;
+
+  useEffect(() => {
+    if (error) playSfx("error");
+  }, [error]);
 
   // Browsers only allow audio after a user gesture; start the soundscape on the first one.
   useEffect(() => {

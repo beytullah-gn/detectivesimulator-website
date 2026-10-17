@@ -5,6 +5,7 @@ import CaseArtwork from "../components/marketing/CaseArtwork";
 import { ClockIcon, PlayIcon } from "../components/icons";
 import { formatDuration } from "../utils/formatters";
 import { MAX_HINTS, summarizeCareer } from "./career";
+import { playSfx } from "./audio/soundscape";
 import { Stars } from "./pieces";
 
 export function CareerBar({ sessions }) {
@@ -62,9 +63,10 @@ export default function Lobby({
         <button
           type="button"
           className="resume-strip"
-          onClick={() =>
-            onSelectScenario(scenarios.find((item) => item.id === resume?.scenario?.id) || resume.scenario)
-          }
+          onClick={() => {
+            playSfx("open");
+            onSelectScenario(scenarios.find((item) => item.id === resume?.scenario?.id) || resume.scenario);
+          }}
           disabled={loading}
         >
           <span className="resume-pulse" aria-hidden="true" />
@@ -107,7 +109,10 @@ export default function Lobby({
                 key={scenario.id}
                 type="button"
                 className={`case-tile ${best?.solved ? "is-solved" : ""} ${locked ? "is-locked" : ""}`}
-                onClick={() => onSelectScenario(scenario)}
+                onClick={() => {
+                  playSfx("open");
+                  onSelectScenario(scenario);
+                }}
               >
                 <CaseArtwork scenario={scenario} stamp={stamp} />
                 <div className="case-tile-foot">

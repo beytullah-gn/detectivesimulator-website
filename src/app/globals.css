@@ -294,3 +294,63 @@ select {
   border: 1px solid var(--ds-border);
   border-radius: var(--ds-radius-md);
 }
+
+/* Brand logo */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ds-text);
+}
+
+.logo-mark {
+  flex-shrink: 0;
+  display: block;
+}
+
+.logo-mark-bg {
+  fill: #15130f;
+  stroke: var(--ds-accent);
+  stroke-width: 2;
+}
+
+.logo-mark-ink {
+  stroke: var(--ds-accent);
+}
+
+.logo-mark-fill,
+.logo-mark-band {
+  fill: var(--ds-accent);
+}
+
+.logo-mark-band {
+  fill: #15130f;
+  opacity: 0.55;
+}
+
+.logo-mark-glass {
+  fill: var(--ds-accent);
+  opacity: 0.16;
+}
+
+.logo-word {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  font-family: var(--font-geist-mono), monospace;
+  text-transform: uppercase;
+}
+
+.logo-word strong {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.logo-word small {
+  margin-top: 4px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.42em;
+  color: var(--ds-accent);
+}

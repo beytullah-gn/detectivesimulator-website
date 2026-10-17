@@ -1,5 +1,5 @@
-// Renders spoken evidence from audio.cjs with macOS `say` (Turkish voice) and ffmpeg effects.
-// Usage: node scripts/case-media/render-audio.cjs [filter]   (requires macOS `say` with the Yelda voice and ffmpeg with rubberband)
+// Renders spoken evidence from audio.cjs with Microsoft neural Turkish voices (edge-tts) and ffmpeg effects.
+// Usage: EDGE_TTS_BIN=/path/to/edge-tts node scripts/case-media/render-audio.cjs [filter]   (needs ffmpeg)
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -8,22 +8,23 @@ const clips = require("./audio.cjs");
 
 const OUT_DIR = path.join(__dirname, "..", "..", "public", "case-media");
 const WORK_DIR = fs.mkdtempSync(path.join(process.env.CASE_MEDIA_TMP || os.tmpdir(), "case-audio-"));
+const EDGE_TTS = process.env.EDGE_TTS_BIN || "edge-tts";
 
-// Male voices are the Turkish female voice pitched down; the formant shift makes them read as male.
+// Two Turkish neural voices; small rate/pitch offsets keep characters apart.
 const VOICES = {
-  komiser: { rate: 166, pitch: 0.94 },
-  female: { rate: 178, pitch: 1.0 },
-  female2: { rate: 172, pitch: 1.07 },
-  male: { rate: 176, pitch: 0.79 },
-  male2: { rate: 168, pitch: 0.72 },
+  komiser: { voice: "tr-TR-EmelNeural", rate: "-6%", pitch: "-6Hz" },
+  female: { voice: "tr-TR-EmelNeural", rate: "+4%", pitch: "+0Hz" },
+  female2: { voice: "tr-TR-EmelNeural", rate: "-2%", pitch: "+8Hz" },
+  male: { voice: "tr-TR-AhmetNeural", rate: "+2%", pitch: "+0Hz" },
+  male2: { voice: "tr-TR-AhmetNeural", rate: "-8%", pitch: "-10Hz" },
 };
 
 const FX = {
-  radio: { chain: "highpass=f=420,lowpass=f=2700,acrusher=bits=9:mix=0.3,acompressor=threshold=0.1:ratio=6", noise: "white:0.018" },
-  phone: { chain: "highpass=f=320,lowpass=f=3300,acompressor=threshold=0.12:ratio=4", noise: "pink:0.006" },
-  voicemail: { chain: "highpass=f=320,lowpass=f=3300,acompressor=threshold=0.12:ratio=4", noise: "pink:0.008" },
-  recorder: { chain: "highpass=f=120,lowpass=f=7000,acompressor=threshold=0.15:ratio=3", noise: "brown:0.02" },
-  briefing: { chain: "highpass=f=80,lowpass=f=11000,aecho=0.8:0.5:35:0.12", noise: "brown:0.006" },
+  radio: { chain: "highpass=f=300,lowpass=f=3400,acompressor=threshold=0.1:ratio=4", noise: "white:0.008" },
+  phone: { chain: "highpass=f=250,lowpass=f=3800,acompressor=threshold=0.12:ratio=3", noise: "pink:0.003" },
+  voicemail: { chain: "highpass=f=250,lowpass=f=3800,acompressor=threshold=0.12:ratio=3", noise: "pink:0.004" },
+  recorder: { chain: "highpass=f=90,lowpass=f=9000", noise: "brown:0.008" },
+  briefing: { chain: "highpass=f=60,aecho=0.8:0.4:30:0.08", noise: "brown:0.002" },
 };
 
 function run(command, args) {
@@ -44,9 +45,20 @@ function squelch(file) {
 
 function speak(file, speaker, text) {
   const voice = VOICES[speaker];
-  const aiff = `${file}.aiff`;
-  run("say", ["-v", "Yelda", "-r", String(voice.rate), "-o", aiff, text]);
-  run("ffmpeg", ["-y", "-i", aiff, "-af", `rubberband=pitch=${voice.pitch}`, "-ar", "44100", "-ac", "1", file]);
+  const mp3 = `${file}.mp3`;
+  const args = ["--voice", voice.voice, `--rate=${voice.rate}`, `--pitch=${voice.pitch}`, "--text", text, "--write-media", mp3];
+  // The speech service sometimes returns no audio; retry with a growing pause.
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      run(EDGE_TTS, args);
+      break;
+    } catch (error) {
+      if (attempt >= 5) throw error;
+      console.warn(`retrying ${speaker} voice (attempt ${attempt + 1})`);
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, attempt * 2000);
+    }
+  }
+  run("ffmpeg", ["-y", "-i", mp3, "-ar", "44100", "-ac", "1", file]);
 }
 
 function render(name, clip) {
@@ -99,7 +111,7 @@ function render(name, clip) {
     "-f", "lavfi", "-i", `anoisesrc=color=${color}:amplitude=${amplitude}`,
     "-filter_complex",
     `[0]apad=pad_dur=0.6,${chain}[v];[1]highpass=f=60[n];[v][n]amix=inputs=2:duration=first:normalize=0,loudnorm=I=-18:TP=-2,afade=t=in:d=0.05`,
-    "-ar", "44100", "-ac", "1", "-c:a", "libmp3lame", "-b:a", "64k",
+    "-ar", "44100", "-ac", "1", "-c:a", "libmp3lame", "-b:a", "80k",
     target,
   ]);
   pieces.length = 0;

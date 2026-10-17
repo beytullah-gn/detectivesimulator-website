@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import { SoundToggles } from "../game/media";
 import { LogOutIcon, UserIcon } from "./icons";
@@ -17,10 +18,7 @@ export default function AppHeader({
     <header className="app-header">
       <div className="header-left">
         <button type="button" className="brand" onClick={onHome} aria-label="Ana Sayfaya Git">
-          <span className="brand-mark">DS</span>
-          <div className="brand-copy">
-            <span className="brand-title">Detective Simulator</span>
-          </div>
+          <Logo />
         </button>
       </div>
 

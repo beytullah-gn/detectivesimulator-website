@@ -4,7 +4,7 @@ import styles from "../../marketing.module.css";
 import CaseArtwork from "@/components/marketing/CaseArtwork";
 import CaseGrid from "@/components/marketing/CaseGrid";
 import { Mugshot } from "@/game/pieces";
-import { formatDifficulty, formatDuration } from "@/utils/formatters";
+import { formatDifficulty, formatDuration, getDifficultyKey } from "@/utils/formatters";
 import MarketingHeader from "@/components/marketing/MarketingHeader";
 import {
   createSocialImages,
@@ -100,7 +100,9 @@ export default async function CaseDetailPage({ params }) {
             <div>
               <div className={styles.metaRow}>
                 {category?.title ? <span>{category.title}</span> : null}
-                <span>{formatDifficulty(scenario.difficulty)}</span>
+                <span className={`difficulty difficulty-${getDifficultyKey(scenario.difficulty)}`}>
+                  {formatDifficulty(scenario.difficulty)}
+                </span>
                 <span>{formatDuration(scenario.estimated_duration)}</span>
               </div>
               <h1>{scenario.title}</h1>

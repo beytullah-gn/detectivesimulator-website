@@ -285,13 +285,86 @@ class Soundscape {
     osc.stop(time + 0.4);
   }
 
-  play(name) {
+  buzz(time, frequency, duration, level) {
+    const ctx = this.ctx;
+    const osc = ctx.createOscillator();
+    osc.type = "square";
+    osc.frequency.value = frequency;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 900;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(level, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+    osc.connect(filter).connect(gain).connect(this.sfxBus);
+    osc.start(time);
+    osc.stop(time + duration + 0.02);
+  }
+
+  swell(time, duration, level) {
+    const ctx = this.ctx;
+    const source = ctx.createBufferSource();
+    source.buffer = this.noiseBuffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.Q.value = 2;
+    filter.frequency.setValueAtTime(300, time);
+    filter.frequency.exponentialRampToValueAtTime(2400, time + duration);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.001, time);
+    gain.gain.exponentialRampToValueAtTime(level, time + duration * 0.85);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+    source.connect(filter).connect(gain).connect(this.sfxBus);
+    source.start(time);
+    source.stop(time + duration + 0.05);
+  }
+
+  play(name, value = 0) {
     if (!this.settings.sfx) return;
     const ctx = this.ensureContext();
     if (!ctx) return;
     const now = ctx.currentTime + 0.01;
 
     switch (name) {
+      case "click":
+        this.noiseBurst({ time: now, duration: 0.025, frequency: 6000, level: 0.18, type: "highpass" });
+        break;
+      case "open":
+        this.noiseBurst({ time: now, duration: 0.16, frequency: 2600, q: 0.6, level: 0.4 });
+        this.thump(now + 0.08, 200, 90, 0.35);
+        this.noiseBurst({ time: now + 0.14, duration: 0.24, frequency: 3400, q: 0.6, level: 0.3 });
+        break;
+      case "start":
+        this.swell(now, 1.1, 0.25);
+        this.thump(now + 1.05, 110, 40, 0.9);
+        [38, 45, 53].forEach((note) => this.playPiano(note, now + 1.05, 0.1, this.sfxBus));
+        break;
+      case "back":
+        this.noiseBurst({ time: now, duration: 0.2, frequency: 1400, q: 0.7, level: 0.28 });
+        break;
+      case "shutter":
+        this.noiseBurst({ time: now, duration: 0.03, frequency: 3200, q: 2, level: 0.45 });
+        this.noiseBurst({ time: now + 0.07, duration: 0.05, frequency: 2200, q: 2, level: 0.4 });
+        break;
+      case "tape":
+        this.thump(now, 700, 260, 0.22);
+        this.noiseBurst({ time: now + 0.03, duration: 0.03, frequency: 5000, level: 0.25, type: "highpass" });
+        break;
+      case "tick":
+        this.buzz(now, 1900, 0.025, 0.04);
+        break;
+      case "star":
+        this.playPiano([79, 83, 86][value % 3], now, 0.12, this.sfxBus);
+        this.playPiano([91, 95, 98][value % 3], now + 0.04, 0.05, this.sfxBus);
+        break;
+      case "rankup":
+        [60, 64, 67, 72, 76, 79].forEach((note, index) => this.playPiano(note, now + index * 0.09, 0.1, this.sfxBus));
+        this.thump(now + 0.5, 150, 50, 0.6);
+        break;
+      case "error":
+        this.buzz(now, 110, 0.12, 0.12);
+        this.buzz(now + 0.16, 98, 0.16, 0.12);
+        break;
       case "paper":
         this.noiseBurst({ time: now, duration: 0.18, frequency: 3200, q: 0.7, level: 0.5 });
         this.noiseBurst({ time: now + 0.12, duration: 0.22, frequency: 2400, q: 0.6, level: 0.35 });
@@ -338,7 +411,7 @@ export function getSoundscape() {
   return instance;
 }
 
-export function playSfx(name) {
+export function playSfx(name, value) {
   if (typeof window === "undefined") return;
-  getSoundscape().play(name);
+  getSoundscape().play(name, value);
 }

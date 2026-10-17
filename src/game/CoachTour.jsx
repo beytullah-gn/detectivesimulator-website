@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { playSfx } from "./audio/soundscape";
 
 const PAD = 6;
 
@@ -80,14 +81,21 @@ export default function CoachTour({ steps, onDone }) {
             Geç
           </button>
           {index > 0 ? (
-            <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => setIndex(index - 1)}>
+            <button type="button" className="ds-btn ds-btn-secondary ds-btn-sm" onClick={() => {
+                playSfx("click");
+                setIndex(index - 1);
+              }}>
               Geri
             </button>
           ) : null}
           <button
             type="button"
             className="ds-btn ds-btn-primary ds-btn-sm"
-            onClick={() => (isLast ? onDone() : setIndex(index + 1))}
+            onClick={() => {
+              playSfx("click");
+              if (isLast) onDone();
+              else setIndex(index + 1);
+            }}
             autoFocus
           >
             {isLast ? "Başla" : "İleri"}

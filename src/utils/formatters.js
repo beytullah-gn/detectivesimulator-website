@@ -29,6 +29,10 @@ export function formatDifficulty(difficulty) {
   return labels[difficulty] || "Standart";
 }
 
+export function getDifficultyKey(difficulty) {
+  return ["easy", "normal", "hard"].includes(difficulty) ? difficulty : "normal";
+}
+
 export function formatDuration(minutes) {
   return minutes ? `${minutes} dk` : "Esnek süre";
 }

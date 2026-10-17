@@ -3,7 +3,8 @@
 import { useState } from "react";
 import CaseArtwork from "../components/marketing/CaseArtwork";
 import { ArrowLeftIcon, ClockIcon, FileTextIcon, PlayIcon, RotateIcon, StarIcon, UsersIcon } from "../components/icons";
-import { formatDifficulty, formatDuration } from "../utils/formatters";
+import { formatDifficulty, formatDuration, getDifficultyKey } from "../utils/formatters";
+import { playSfx } from "./audio/soundscape";
 import { AudioPlayer } from "./media";
 import { Mugshot } from "./pieces";
 
@@ -34,7 +35,9 @@ export default function Briefing({
         <div className="briefing-copy">
           <div className="chip-row">
             {scenario.category?.title ? <span className="chip">{scenario.category.title}</span> : null}
-            <span className="chip">{formatDifficulty(scenario.difficulty)}</span>
+            <span className={`difficulty difficulty-${getDifficultyKey(scenario.difficulty)}`}>
+              {formatDifficulty(scenario.difficulty)}
+            </span>
             <span className="chip">
               <ClockIcon size={12} />
               {formatDuration(scenario.estimated_duration)}
@@ -77,7 +80,10 @@ export default function Briefing({
                   <button
                     type="button"
                     className="ds-btn ds-btn-primary"
-                    onClick={() => onStart({ restart: true })}
+                    onClick={() => {
+                      playSfx("stamp");
+                      onStart({ restart: true });
+                    }}
                     disabled={starting || loading}
                   >
                     <RotateIcon size={14} />
@@ -92,7 +98,10 @@ export default function Briefing({
                   <button
                     type="button"
                     className="ds-btn ds-btn-primary ds-btn-lg"
-                    onClick={() => onStart({ restart: false })}
+                    onClick={() => {
+                      playSfx("start");
+                      onStart({ restart: false });
+                    }}
                     disabled={starting || loading}
                   >
                     <PlayIcon size={14} />
@@ -101,7 +110,10 @@ export default function Briefing({
                   <button
                     type="button"
                     className="ds-btn ds-btn-secondary ds-btn-lg"
-                    onClick={() => setConfirmRestart(true)}
+                    onClick={() => {
+                      playSfx("click");
+                      setConfirmRestart(true);
+                    }}
                     disabled={starting || loading}
                   >
                     <RotateIcon size={14} />
@@ -114,7 +126,10 @@ export default function Briefing({
             <button
               type="button"
               className="ds-btn ds-btn-primary ds-btn-lg start-btn"
-              onClick={() => onStart({ restart: false })}
+              onClick={() => {
+                      playSfx("start");
+                      onStart({ restart: false });
+                    }}
               disabled={starting || loading}
             >
               <PlayIcon size={14} />

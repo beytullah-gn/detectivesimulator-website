@@ -65,33 +65,6 @@
   color: var(--ds-text);
 }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--ds-radius);
-  background-color: var(--ds-accent);
-  color: var(--ds-accent-contrast);
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.05em;
-  line-height: 1;
-}
-
-.brand-copy {
-  display: flex;
-  flex-direction: column;
-}
-
-.brand-title {
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-
 .header-nav {
   display: none;
   align-items: center;
@@ -551,4 +524,20 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+.header-link {
+  position: relative;
+  padding: 19px 2px;
+}
+
+.header-link.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ds-accent);
 }
