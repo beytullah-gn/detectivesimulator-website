@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { CloseIcon, PlayIcon } from "../components/icons";
 import { getSoundscape, playSfx, readSoundSettings } from "./audio/soundscape";
 
@@ -117,15 +118,18 @@ export function EvidenceImage({ src, alt }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt} loading="lazy" />
       </button>
-      {open ? (
+      {open
+        ? createPortal(
         <div className="lightbox" role="dialog" aria-modal="true" aria-label={alt} onClick={() => setOpen(false)}>
           <button type="button" className="icon-btn lightbox-close" aria-label="Kapat">
             <CloseIcon size={18} />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={src} alt={alt} />
-        </div>
-      ) : null}
+        </div>,
+            document.body
+          )
+        : null}
     </>
   );
 }

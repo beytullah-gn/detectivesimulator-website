@@ -486,7 +486,7 @@ function EvidenceCard({ item, seen, pinned, onOpen }) {
   return (
     <button
       type="button"
-      className={`evidence-card ${seen ? "seen" : "unseen"} ${image ? "has-photo" : ""}`}
+      className={`evidence-card ${seen ? "seen" : "unseen"} ${image ? "has-photo" : ""} ${pinned ? "pinned" : ""}`}
       onClick={onOpen}
     >
       {image ? (
@@ -499,7 +499,12 @@ function EvidenceCard({ item, seen, pinned, onOpen }) {
       </span>
       <strong>{item.title}</strong>
       {audio ? <span className="evidence-wave" aria-hidden="true" /> : null}
-      {pinned ? <PinIcon size={14} filled className="evidence-pin" /> : null}
+      {pinned ? (
+        <span className="evidence-pin">
+          <PinIcon size={12} filled />
+          Önemli
+        </span>
+      ) : null}
       {!seen ? <span className="new-dot" aria-label="İncelenmedi" /> : null}
     </button>
   );
